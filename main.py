@@ -146,11 +146,8 @@ def main():
         data = await riot_client.get_profile_info(puuid)
         if data["status_code"] != 200:
             await interaction.response.send_message(summoner_not_found(name, tag))
-            return
-
-        user = data["user"]
-        embed = await embed_generator.generate_user_embed(user)
-        await interaction.response.send_message(embed=embed)
+        else:
+            await interaction.response.send_message(embed=embed_generator.big_user(data["user"]))
 
     bot.run(os.getenv("DISCORD_TOKEN"))
 

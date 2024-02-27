@@ -1,5 +1,6 @@
 import aiohttp
-from game_info import GameInfo, PlayerInfo, UserInfo
+from typing import List
+from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
 
 
 class RiotAPI:
@@ -180,26 +181,22 @@ class RiotAPI:
                     ranks.append(rankArray)
         return ranks
 
-    async def get_mastery_info(self, puuid):
+    async def get_mastery_info(self, puuid: str) -> List[UserChamp]:
         url = f"{self.base_url}lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}"
         params = {"api_key": self.api_key}
-        champions = []
         async with aiohttp.ClientSession() as session:
             async with session.get(url, params=params) as response:
-                data = await response.json()
-                for champion in data:
-                    id = champion["championId"]
-                    level = champion["championLevel"]
-                    points = champion["championPoints"]
-                    last_play = champion["lastPlayTime"]
-                    chest = champion["chestGranted"]
-                    champions.append([id, level, points, last_play, chest])
-        return champions
+                return [
+                    UserChamp(c["championId"], c["championLevel"], points=c["championPoints"],
+                              last_play=c["lastPlayTime"],    chest=c["chestGranted"])
+                    for c in await response.json()
+                ]
 
     async def get_profile_info(self, puuid):
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner["status_code"] != 200:
             return {"status_code": 404, "message": "Summoner not found"}
+
         id = summoner["id"]
         summoner_name = summoner["name"]
         level = summoner["summonerLevel"]
@@ -232,12 +229,7 @@ class RiotAPI:
                 max_division = rank[1].upper()
 
         champions = await self.get_mastery_info(puuid)
-        top_champs = champions[:3]
-        total_mastery = 0
-        total_points = 0
-        for champion in champions:
-            total_mastery += champion[1]
-            total_points += champion[2]
+
         user = UserInfo(
             id,
             summoner_name,
@@ -252,8 +244,8 @@ class RiotAPI:
             wins_flex,
             losses_flex,
             max_division,
-            top_champs,
-            total_points,
-            total_mastery,
+            top_champs=champions[:3],
+            total_mastery=sum(map(lambda c: c.level, champions)),
+            total_points=sum(map(lambda c: c.points, champions)),
         )
         return {"status_code": 200, "user": user}
