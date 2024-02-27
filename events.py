@@ -1,25 +1,22 @@
-from typing import List, Literal
+from typing import List, Literal, Union
 import asyncio
 from riot_api import RiotAPI
 from dataclasses import dataclass
 from game_info import UserInfo, GameInfo
 from logs import log
+from utils import flat
 
 
 @dataclass
 class GameEvent:
-    puuid: str
-    relavant_time: int
+    user: UserInfo
+    game: GameInfo
     kind: Literal['KDA', 'Lose Streak']
 
     kda: str = ''
     champ: str = ''
 
     streak: int = 0
-
-
-def flat(matrix):
-    return [item for row in matrix for item in row]
 
 
 class EventManager():
@@ -75,9 +72,9 @@ class EventManager():
             info = self.extract_user_match_info(user.id, game)
             if info['kda'] != 'Perfect' and float(info['kda']) < self.BAD_KDA:
                 events.append(GameEvent(
-                    puuid,
+                    user,
+                    game,
                     kind='KDA',
-                    relavant_time=game.start_time,
                     kda=info['kda'],
                     champ=info['champ']
                 ))
@@ -86,9 +83,9 @@ class EventManager():
                 lose_streak += 1
                 if lose_streak >= 3:
                     events.append(GameEvent(
-                        puuid,
+                        user,
+                        game,
                         kind='Lose Streak',
-                        relavant_time=game.start_time,
                         champ=info['champ'],
                         streak=lose_streak
                     ))
@@ -127,17 +124,17 @@ class EventManager():
             'lose_streak': lose_streak
         }
 
-    async def set_memory_to_game(self, puuid: str, game_id: str) -> bool:
+    async def set_memory_to_game(self, puuid: str, game_id: Union[str, None] = None) -> bool:
         response = await self.riot.get_profile_info(puuid)
         if response['status_code'] != 200:
             return False
         user: UserInfo = response['user']
 
         game_ids = await self.riot.get_matches_ids_by_puuid(puuid, 10)
-        if game_id not in game_ids:
+        if game_id is not None and game_id not in game_ids:
             return False
 
-        index = game_ids.index(game_id)
+        index = 0 if game_id is None else game_ids.index(game_id)
         await self.remember_game(puuid, user.id, game_id, game_ids[index:])
         return True
 

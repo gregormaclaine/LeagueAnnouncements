@@ -3,6 +3,9 @@ import requests
 import random
 from typing import List
 from game_info import UserInfo
+from datetime import datetime
+from events import GameEvent
+from utils import random_superlative, repair_champ_name
 
 rank_assets = {
     "UNRANKED": "https://cdn.discordapp.com/attachments/989905618494181386/989936020013334628/unranked.png",
@@ -19,16 +22,6 @@ rank_assets = {
 }
 
 league_patch = "14.3.1"
-
-
-def repair_champ_name(champ_name):
-    new_champ_name = ""
-    for i in champ_name:
-        if i <= "Z" and new_champ_name != "":
-            new_champ_name += " " + i
-        else:
-            new_champ_name += i
-    return new_champ_name
 
 
 champion_info = requests.get(
@@ -103,5 +96,33 @@ def tracked_list(users: List[UserInfo], offset: int, total: int):
         index = offset * 15 + i + 1
         user_line = f"{index}. {u.summoner_name} (Lvl {u.level})"
         embed.add_field(name=user_line, value="", inline=False)
+
+    return embed
+
+
+def announcement(e: GameEvent):
+    embed = discord.Embed(
+        title=f"Congratulations {e.user.summoner_name}!",
+        description=f"",
+        color=random.randint(0, 16777215),
+    )
+    embed.set_author(name=f'{e.user.summoner_name} (Lvl {e.user.level})',
+                     icon_url=icon_url(e.user.icon))
+    embed.set_thumbnail(url=rank_assets[e.user.max_division.upper()])
+
+    if e.kind == 'KDA':
+        embed.add_field(
+            name=f"{e.user.summoner_name} has achieved the {random_superlative()} KDA of {e.kda} in a recent match!",
+            value=f"They played as {e.champ} and the game lasted {round(e.game.duration / 60, 1)} mins.",
+            inline=False)
+    elif e.kind == 'Lose Streak':
+        embed.add_field(
+            name=f"{e.user.summoner_name} has just lost for the {e.streak}th time in a row!",
+            value=f"Make sure to congratulate them for this {random_superlative()} achievement!",
+            inline=False)
+
+    time = datetime.fromtimestamp(e.game.start_time / 1000)\
+        .strftime("%a, %d %b %Y %I:%M%p")
+    embed.set_footer(text=f'Game played at {time}')
 
     return embed

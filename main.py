@@ -5,6 +5,7 @@ import os
 import embed_generator
 import riot_api
 from logs import log, log_command
+from events import EventManager
 
 
 def riot_account_not_found(gameName, tag):
@@ -27,6 +28,7 @@ def main():
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
     riot_client = riot_api.RiotAPI(os.getenv("RIOT_TOKEN"), server, region)
+    events = EventManager(riot_client)
 
     @bot.event
     async def on_ready():
@@ -106,16 +108,18 @@ def main():
             return
         tracked = tracked_players[g_id]
 
+        await interaction.response.defer()
+
         users = []
         for puuid in tracked[offset * 15:(offset + 1) * 15]:
             data = await riot_client.get_profile_info(puuid)
             if data["status_code"] != 200:
-                await interaction.response.send_message(summoner_not_found('', ''))
+                await interaction.followup.send('Couldn\'t find one of the profiles')
                 return
             users.append(data["user"])
 
         embed = embed_generator.tracked_list(users, offset, len(tracked))
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
     @bot.tree.command(name="profile", description="Shows profile of a player")
     async def profile(interaction: discord.Interaction, name: str, tag: str):
@@ -131,6 +135,35 @@ def main():
             await interaction.response.send_message(summoner_not_found(name, tag))
         else:
             await interaction.response.send_message(embed=embed_generator.big_user(data["user"]))
+
+    @bot.tree.command(name="run_checks", description="Manually check for new announcements")
+    async def run_checks(interaction: discord.Interaction):
+        log_command(interaction)
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        await interaction.response.defer()
+
+        announcments = await events.check(tracked)
+
+        if len(announcments) == 0:
+            await interaction.followup.send('No new announcements')
+            return
+
+        embeds = [embed_generator.announcement(e) for e in announcments]
+        await interaction.followup.send(embeds=embeds)
+
+    @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
+    async def dev_set_game_mem(interaction: discord.Interaction, puuid: str, game_id: str):
+        await interaction.response.defer()
+        log_command(interaction)
+
+        success = await events.set_memory_to_game(puuid, game_id)
+        await interaction.followup.send('Success' if success else 'Failed')
 
     bot.run(os.getenv("DISCORD_TOKEN"))
 

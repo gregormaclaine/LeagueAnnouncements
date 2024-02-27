@@ -1,12 +1,7 @@
 import discord
 from datetime import datetime
 from colorist import Color, Effect
-
-
-def r_pad(t: str, w: int = 8):
-    if len(t) >= w:
-        return t
-    return t + ' ' * (w - len(t))
+from utils import r_pad
 
 
 def style(text: str, color: Color = Color.DEFAULT, bold=False):

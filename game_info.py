@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Literal
 from datetime import datetime
-from logs import r_pad
+from utils import r_pad
 
 
 @dataclass
