@@ -2,6 +2,8 @@ import discord
 from datetime import datetime
 import requests
 import random
+from typing import List
+from game_info import UserInfo
 
 # big brain file hosting :)
 rank_assets = {
@@ -103,11 +105,12 @@ async def generate_match_embed(game_info, username):
 
 async def generate_user_embed(user_info):
     embed = discord.Embed(
-        title=f"{user_info.level} level",
+        title=f"Level {user_info.level}",
         description=f"",
         color=random.randint(0, 16777215),
     )
-    embed.set_author(name=user_info.summoner_name, icon_url=icon_url(user_info.icon))
+    embed.set_author(name=user_info.summoner_name,
+                     icon_url=icon_url(user_info.icon))
     embed.set_thumbnail(url=rank_assets[user_info.max_division.upper()])
     embed.add_field(
         name=f"Solo/Duo - {user_info.rank_solo}",
@@ -129,6 +132,38 @@ async def generate_user_embed(user_info):
         embed.add_field(
             name=f"{name} ({champion[1]} lvl)", value=f"{champion[2]:,} pts."
         )
+
+    return embed
+
+
+def mini_user(user_info):
+    embed = discord.Embed(
+        title=f"Level {user_info.level}",
+        description=f"",
+        color=random.randint(0, 16777215),
+    )
+    embed.set_author(name=user_info.summoner_name,
+                     icon_url=icon_url(user_info.icon))
+    embed.set_thumbnail(url=rank_assets[user_info.max_division.upper()])
+    embed.add_field(
+        name=f"Total Mastery: {user_info.total_mastery}",
+        value=f" Total Points: {user_info.total_points:,}",
+        inline=False,
+    )
+    return embed
+
+
+def tracked_list(users: List[UserInfo], offset: int, total: int):
+    embed = discord.Embed(
+        title=f"Tracking {len(users)} Player{'s' if len(users) != 1 else ''}",
+        description=f"Showing players {offset * 15 + 1}-{min((offset + 1) * 15, total)}",
+        color=random.randint(0, 16777215),
+    )
+
+    for i, u in enumerate(users):
+        index = offset * 15 + i + 1
+        user_line = f"{index}. {u.summoner_name} (Lvl {u.level})"
+        embed.add_field(name=user_line, value="", inline=False)
 
     return embed
 

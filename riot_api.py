@@ -107,7 +107,8 @@ class RiotAPI:
             gold_earned = participant["goldEarned"]
             damage = participant["totalDamageDealtToChampions"]
             creep_score = (
-                participant["totalMinionsKilled"] + participant["neutralMinionsKilled"]
+                participant["totalMinionsKilled"] +
+                participant["neutralMinionsKilled"]
             )
             vision_score = participant["visionScore"]
             team = "Red"
