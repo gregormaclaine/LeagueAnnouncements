@@ -23,8 +23,8 @@ def main():
     tracked_players = {}
 
     # Riot API constants
-    server = "euw1"
-    region = "europe"
+    server = os.getenv("SERVER", "euw1")
+    region = os.getenv("REGION", "europe")
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
     riot_client = riot_api.RiotAPI(os.getenv("RIOT_TOKEN"), server, region)
