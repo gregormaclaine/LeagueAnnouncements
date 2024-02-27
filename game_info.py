@@ -83,3 +83,35 @@ class UserInfo:
     top_champs: List[UserChamp]
     total_points: int
     total_mastery: int
+
+    def total_solo_games(self):
+        return self.wins_solo + self.losses_solo
+
+    def total_flex_games(self):
+        return self.wins_flex + self.losses_flex
+
+    def solo_winrate(self):
+        rate = self.wins_solo / self.total_solo_games()
+        return f'{rate * 100:.2f}%'
+
+    def flex_winrate(self):
+        rate = self.wins_flex / self.total_flex_games()
+        return f'{rate * 100:.2f}%'
+
+    def solo_info(self):
+        s = ''
+        if self.rank_solo != 'UNRANKED':
+            s += str(self.lp_solo) + ' LP, '
+        s += f'{self.total_solo_games()} games'
+        if self.total_solo_games() > 0:
+            s += f', {self.solo_winrate()} WR'
+        return s
+
+    def flex_info(self):
+        s = ''
+        if self.rank_flex != 'UNRANKED':
+            s += str(self.lp_flex) + ' LP, '
+        s += f'{self.total_flex_games()} games'
+        if self.total_flex_games() > 0:
+            s += f', {self.flex_winrate()} WR'
+        return s

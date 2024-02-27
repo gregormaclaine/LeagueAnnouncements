@@ -37,29 +37,29 @@ def icon_url(icon_id):
     return f"https://ddragon.leagueoflegends.com/cdn/{league_patch}/img/profileicon/{icon_id}.png"
 
 
-def big_user(user_info: UserInfo):
+def big_user(user: UserInfo):
+    print(user)
     embed = discord.Embed(
-        title=f"Level {user_info.level}",
+        title=f"Level {user.level}",
         description=f"",
         color=random.randint(0, 16777215),
     )
-    embed.set_author(name=user_info.summoner_name,
-                     icon_url=icon_url(user_info.icon))
-    embed.set_thumbnail(url=rank_assets[user_info.max_division.upper()])
+    embed.set_author(name=user.summoner_name,
+                     icon_url=icon_url(user.icon))
+    embed.set_thumbnail(url=rank_assets[user.max_division.upper()])
+
     embed.add_field(
-        name=f"Solo/Duo - {user_info.rank_solo}",
-        value=f"{str(user_info.lp_solo) + ' LP, ' if user_info.rank_solo != 'UNRANKED' else ''}{user_info.wins_solo + user_info.losses_solo} games{f', {round(user_info.wins_solo/(user_info.losses_solo + user_info.wins_solo) * 100, 2)}% WR' if (user_info.losses_solo + user_info.wins_solo) > 0 else ''}",
-    )
+        name=f"Solo/Duo - {user.rank_solo}", value=user.solo_info())
+
+    embed.add_field(name=f"Flex - {user.rank_flex}", value=user.flex_info())
+
     embed.add_field(
-        name=f"Flex - {user_info.rank_flex}",
-        value=f"{str(user_info.lp_flex) + ' LP, ' if user_info.rank_flex != 'UNRANKED' else ''}{user_info.wins_flex + user_info.losses_flex} games{f', {round(user_info.wins_flex/(user_info.losses_flex + user_info.wins_flex) * 100, 2)}% WR' if (user_info.losses_flex + user_info.wins_flex) > 0 else ''}",
-    )
-    embed.add_field(
-        name=f"Total Mastery: {user_info.total_mastery}",
-        value=f" Total Points: {user_info.total_points:,}",
+        name=f"Total Mastery: {user.total_mastery}",
+        value=f" Total Points: {user.total_points:,}",
         inline=False
     )
-    for champion in user_info.top_champs[:3]:
+
+    for champion in user.top_champs[:3]:
         name = champion_name.get(champion.id, f"ID: {champion.id}")
         embed.add_field(
             name=f"{name} ({champion.level} lvl)", value=f"{champion.points:,} pts."
