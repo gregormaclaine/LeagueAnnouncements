@@ -1,27 +1,10 @@
-import datetime
 import discord
 from discord.ext import commands as discord_commands
 from dotenv import load_dotenv
 import os
 import embed_generator
 import riot_api
-
-
-def log_command(i: discord.Interaction):
-    log_s = f'Command [{i.data["name"]}]'
-
-    if 'options' in i.data:
-        options = " ".join([str(x['value']) for x in i.data['options']])
-        log_s += f' with options [{options}]'
-
-    log_s += f' from [{i.user}] in guild [{i.guild}], channel [{i.channel}]'
-    log(log_s)
-
-
-def log(message, level="INFO"):
-    timestamp = datetime.datetime.now()
-    timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp_str} {level}] {message}")
+from logs import log, log_command
 
 
 def riot_account_not_found(gameName, tag):

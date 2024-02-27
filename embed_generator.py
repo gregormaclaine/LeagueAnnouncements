@@ -1,5 +1,4 @@
 import discord
-from datetime import datetime
 import requests
 import random
 from typing import List
