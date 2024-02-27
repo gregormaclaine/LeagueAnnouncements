@@ -26,12 +26,12 @@ class RiotAPI:
         "CHALLENGER": 9,
     }
 
-    def __init__(self, api_key, server, region):
+    def __init__(self, api_key: str, server: str, region: str):
         self.api_key = api_key
         self.base_url = f"https://{server}.api.riotgames.com/"
         self.base_url_universal = f"https://{region}.api.riotgames.com/"
 
-    async def get_riot_account_puuid(self, gameName, tagLine):
+    async def get_riot_account_puuid(self, gameName: str, tagLine: str):
         url = f"{self.base_url_universal}riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}"
         params = {"api_key": self.api_key}
         async with aiohttp.ClientSession() as session:
@@ -41,7 +41,7 @@ class RiotAPI:
                     return data["puuid"]
                 return None
 
-    async def get_summoner_by_puuid(self, puuid):
+    async def get_summoner_by_puuid(self, puuid: str):
         url = f"{self.base_url}lol/summoner/v4/summoners/by-puuid/{puuid}"
         params = {"api_key": self.api_key}
         async with aiohttp.ClientSession() as session:
@@ -53,7 +53,7 @@ class RiotAPI:
                     return data
                 return data["status"]
 
-    async def get_matches_ids_by_puuid(self, puuid, count=20, start=0):
+    async def get_matches_ids_by_puuid(self, puuid: str, count: int = 20, start: int = 0) -> List[str]:
         url = f"{self.base_url_universal}lol/match/v5/matches/by-puuid/{puuid}/ids"
         params = {"api_key": self.api_key, "count": count, "start": start}
         async with aiohttp.ClientSession() as session:
@@ -63,7 +63,7 @@ class RiotAPI:
                     return data
                 return []
 
-    async def get_raw_match_info_by_id(self, match_id):
+    async def get_raw_match_info_by_id(self, match_id: str):
         url = f"{self.base_url_universal}lol/match/v5/matches/{match_id}"
         params = {"api_key": self.api_key}
         async with aiohttp.ClientSession() as session:
@@ -75,7 +75,7 @@ class RiotAPI:
                     return data
                 return data["status"]
 
-    async def get_recent_matches_ids(self, puuid, count=20):
+    async def get_recent_matches_ids(self, puuid: str, count: int = 20):
         summoner_data = await self.get_summoner_by_puuid(puuid)
         if summoner_data["status_code"] != 200:
             return [[], summoner_data]
@@ -85,9 +85,10 @@ class RiotAPI:
             summoner_data,
         ]
 
-    async def get_match_info_by_id(self, match_id):
+    async def get_match_info_by_id(self, match_id: str):
         raw_data = await self.get_raw_match_info_by_id(match_id)
         if raw_data["status_code"] != 200:
+            print('Error: Couldn\'t get match info:', raw_data)
             return None
         start_time = raw_data["info"]["gameStartTimestamp"]
         game_duration = raw_data["info"]["gameDuration"]
@@ -146,7 +147,7 @@ class RiotAPI:
         )
         return game_info
 
-    async def get_recent_matches_infos(self, puuid, count=20):
+    async def get_recent_matches_infos(self, puuid: str, count: int = 20):
         matches_infos = []
         data = await self.get_recent_matches_ids(puuid, count)
         for match_id in data[0]:
@@ -155,13 +156,13 @@ class RiotAPI:
                 matches_infos.append(match_info)
         return [matches_infos, data[1]]
 
-    async def get_recent_match_info(self, puuid, id=0):
+    async def get_recent_match_info(self, puuid: str, id: int = 0):
         match_data = await self.get_recent_matches_ids(puuid, id + 1)
         if len(match_data[0]) > id:
             return await self.get_match_info_by_id(match_data[0][id])
         return None
 
-    async def get_ranked_info(self, user_id):
+    async def get_ranked_info(self, user_id: str):
         url = f"{self.base_url}lol/league/v4/entries/by-summoner/{user_id}"
         params = {"api_key": self.api_key}
         ranks = []
@@ -192,7 +193,7 @@ class RiotAPI:
                     for c in await response.json()
                 ]
 
-    async def get_profile_info(self, puuid):
+    async def get_profile_info(self, puuid: str):
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner["status_code"] != 200:
             return {"status_code": 404, "message": "Summoner not found"}
