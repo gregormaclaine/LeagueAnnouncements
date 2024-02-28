@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands as discord_commands
+from discord.ext import commands as discord_commands, tasks
 from dotenv import load_dotenv
 import os
 import embed_generator
@@ -14,6 +14,7 @@ def main():
     intents = discord.Intents.default()
 
     tracked_players = {}
+    output_channels = {}
 
     # Riot API constants
     server = os.getenv("SERVER", "euw1")
@@ -48,6 +49,8 @@ def main():
             status=discord.Status.online, activity=discord.Game(
                 "League of Legends")
         )
+        log('Starting automatic announcement checker')
+        await automatic_announcement_check.start()
 
     @bot.tree.command(name="track", description="Tracks a player")
     async def track(interaction: discord.Interaction, name: str, tag: str):
@@ -161,6 +164,36 @@ def main():
 
         success = await events.set_memory_to_game(puuid, game_id)
         await interaction.followup.send('Success' if success else 'Failed')
+
+    @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
+    async def set_channel(interaction: discord.Interaction, channel_id: str):
+        log_command(interaction)
+        old_id = output_channels.get(interaction.guild_id, None)
+
+        channel = bot.get_channel(int(channel_id))
+        if channel is None:
+            await interaction.response.send_message('Channel not found')
+            return
+
+        output_channels[interaction.guild_id] = int(channel_id)
+
+        await interaction.response.send_message(
+            'Channel Updated' if old_id else 'Channel Set')
+
+        await channel.send('I will now send announcements here')
+
+    @tasks.loop(seconds=300)  # repeat after every 5 mins
+    async def automatic_announcement_check():
+        for guild_id, channel_id in output_channels.items():
+            if guild_id not in tracked_players:
+                continue
+            announcments = await events.check(tracked_players[guild_id])
+
+            if len(announcments) == 0:
+                continue
+
+            embeds = [embed_generator.announcement(e) for e in announcments]
+            await bot.get_channel(channel_id).send(embeds=embeds)
 
     bot.run(os.getenv("DISCORD_TOKEN"))
 
