@@ -4,7 +4,7 @@ from riot.api import RiotAPI
 from dataclasses import dataclass
 from game_info import UserInfo, GameInfo
 from logs import log
-from utils import flat
+from utils import flat, num_of
 
 
 @dataclass
@@ -20,8 +20,8 @@ class GameEvent:
 
 
 class EventManager():
-    STREAK_TIMEOUT = 12 * 60 * 60
     BAD_KDA = 1
+    HISTORY_COUNT = 20
 
     riot: RiotAPI
     player_memory: dict[str, object]
@@ -34,7 +34,8 @@ class EventManager():
         log('Running event checks...')
         tasks = [self.check_user(puuid) for puuid in puuids]
         events = flat(await asyncio.gather(*tasks))
-        log(f'Completed event checks ({len(events)} new announcements)')
+        log(f'Completed event checks ({
+            num_of('new announcement', len(events))})')
         return events
 
     async def check_user(self, puuid: str) -> List[GameEvent]:
@@ -43,10 +44,11 @@ class EventManager():
             return []
         user: UserInfo = response.data
 
-        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, 10)).data
+        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, self.HISTORY_COUNT)).data
         memory = self.player_memory.get(puuid)
 
         if memory is None or memory['last_game'] not in game_ids:
+            log(f'Resetting player memory for [{user.summoner_name}]')
             await self.remember_game(puuid, user.id, game_ids[0], game_ids[1:])
             return []
 
@@ -56,8 +58,8 @@ class EventManager():
                                            for gid in new_game_ids])
 
         if new_games:
-            log(
-                f'Scanning {len(new_games)} new games from [{user.summoner_name}]')
+            log(f'Scanning {num_of('new game', len(new_games))
+                            } from [{user.summoner_name}]')
 
         events = self.find_events_from_games(
             user, new_games, memory['lose_streak'])
@@ -104,6 +106,8 @@ class EventManager():
             }
 
     def did_user_win(self, user_id: str, game: GameInfo) -> bool:
+        if game is None:
+            return True
         p = [p for p in game.participants if p.id == user_id]
         return (p[0].team == game.winner) if p else True
 
@@ -124,17 +128,27 @@ class EventManager():
             'lose_streak': lose_streak
         }
 
-    async def set_memory_to_game(self, puuid: str, game_id: Union[str, None] = None) -> bool:
+    async def set_memory_to_game(self, puuid: str, game_id: Union[str, None] = None, offset: int = 0) -> bool:
         response = await self.riot.get_profile_info(puuid)
         if response.error():
             return False
         user: UserInfo = response.data
 
-        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, 10)).data
+        matches_res = await self.riot.get_matches_ids_by_puuid(puuid, 20)
+        if matches_res.error():
+            log('Error: ' + matches_res.error(), 'ERROR')
+            return False
+        game_ids = matches_res.data
         if game_id is not None and game_id not in game_ids:
             return False
 
-        index = 0 if game_id is None else game_ids.index(game_id)
+        if game_id is None:
+            game_id = game_ids[offset]
+            index = 1 + offset
+        else:
+            index = game_ids.index(game_id)
+        print(game_id)
+
         await self.remember_game(puuid, user.id, game_id, game_ids[index:])
         return True
 
@@ -147,6 +161,8 @@ if __name__ == '__main__':
     riot_client = RiotAPI(os.getenv('RIOT_TOKEN'), 'euw1', 'europe')
     events = EventManager(riot_client)
 
-    puuid = os.getenv('TEST_PUUID')
-    asyncio.run(events.set_memory_to_game(puuid, os.getenv('TEST_GAME_ID')))
+    user = asyncio.run(riot_client.get_riot_account_puuid('alfais', 'at1'))
+    puuid = user.data['puuid']
+    print(puuid)
+    asyncio.run(events.set_memory_to_game(puuid, offset=2))
     print(asyncio.run(events.check([puuid])))

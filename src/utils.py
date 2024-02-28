@@ -11,6 +11,10 @@ def r_pad(t: str, w: int = 8):
     return t + ' ' * (w - len(t))
 
 
+def num_of(s: str, count: int):
+    return f'{count} {s}{'s' if count != 1 else ''}'
+
+
 def repair_champ_name(champ_name):
     new_champ_name = ""
     for i in champ_name:

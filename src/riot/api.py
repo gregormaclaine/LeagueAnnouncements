@@ -3,6 +3,7 @@ from typing import List
 from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner
 from logs import log
+from asyncio import Semaphore
 
 
 class RiotAPI:
@@ -33,17 +34,19 @@ class RiotAPI:
         self.base_url = f"https://{server}.api.riotgames.com"
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
+        self.sem = Semaphore(5)
+
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
         async with aiohttp.ClientSession() as session:
-            async with session.get(base_url + url, params=params) as response:
+            async with self.sem, session.get(base_url + url, params=params) as response:
                 if response.status == 200:
                     return APIResponse(data=await response.json())
                 else:
                     r = APIResponse(status=response.status)
                     if r.error() == 'unknown':
-                        raise Exception(response)
+                        raise Exception(str(response))
                     return r
 
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:
@@ -138,7 +141,7 @@ class RiotAPI:
             )
             participants.append(player_info)
 
-        return GameInfo(id, start_time, game_duration,
+        return GameInfo(match_id, start_time, game_duration,
                         winner, participants, queue_type)
 
     async def get_recent_matches_infos(self, puuid: str, count: int = 20):

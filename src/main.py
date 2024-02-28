@@ -8,9 +8,18 @@ from logs import log, log_command
 from events import EventManager
 from game_info import UserInfo
 
+load_dotenv()
+
+RIOT_TOKEN = os.getenv("RIOT_TOKEN")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+
+if RIOT_TOKEN is None or DISCORD_TOKEN or None:
+    print("Error: Invalid enviroment variables:")
+    print('Error:  - a necessary token is missing')
+    exit(1)
+
 
 def main():
-    load_dotenv()
     intents = discord.Intents.default()
 
     tracked_players = {}
@@ -21,7 +30,7 @@ def main():
     region = os.getenv("REGION", "europe")
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
-    riot_client = RiotAPI(os.getenv("RIOT_TOKEN"), server, region)
+    riot_client = RiotAPI(RIOT_TOKEN, server, region)
     events = EventManager(riot_client)
 
     async def get_user_from_name(interaction: discord.Interaction, name: str, tag: str):
@@ -195,7 +204,7 @@ def main():
             embeds = [embed_generator.announcement(e) for e in announcments]
             await bot.get_channel(channel_id).send(embeds=embeds)
 
-    bot.run(os.getenv("DISCORD_TOKEN"))
+    bot.run(DISCORD_TOKEN)
 
 
 if __name__ == "__main__":

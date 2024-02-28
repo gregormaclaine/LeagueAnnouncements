@@ -1,26 +1,23 @@
 from typing import Literal, Union, Generic, TypeVar, TypedDict
 from logs import log
-from dataclasses import dataclass
 
 T = TypeVar('T')
 
 
-@dataclass
 class APIResponse(Generic[T]):
-    status: int = 200
-    data: T = None
+    ERROR_TYPES = {
+        200: None,
+        403: 'invalid-api-key',
+        429: 'rate-limit',
+        404: 'not-found'
+    }
+
+    def __init__(self, status: int = 200, data: T = None):
+        self.status = status
+        self.data = data
 
     def error(self) -> Union[None, Literal['rate-limit', 'invalid-api-key', 'unknown', 'not-found']]:
-        if self.status == 200:
-            return None
-        elif self.status == 403:
-            return 'invalid-api-key'
-        elif self.status == 429:
-            return 'rate-limit'
-        elif self.status == 404:
-            return 'not-found'
-        else:
-            return 'unknown'
+        return self.ERROR_TYPES.get(self.status, 'unknown')
 
     async def respond_if_error(self, send_message) -> bool:
         '''Respond to discord command if error occured. Returns whether an error occured'''

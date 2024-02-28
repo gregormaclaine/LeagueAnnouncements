@@ -5,7 +5,7 @@ from typing import List
 from game_info import UserInfo
 from datetime import datetime
 from events import GameEvent
-from utils import random_superlative, repair_champ_name
+from utils import random_superlative, repair_champ_name, num_of
 
 rank_assets = {
     "UNRANKED": "https://cdn.discordapp.com/attachments/989905618494181386/989936020013334628/unranked.png",
@@ -87,7 +87,7 @@ def mini_user(user_info: UserInfo):
 
 def tracked_list(users: List[UserInfo], offset: int, total: int):
     embed = discord.Embed(
-        title=f"Tracking {len(users)} Player{'s' if len(users) != 1 else ''}",
+        title=f"Tracking {num_of('Player', len(users))}",
         description=f"Showing players {
             offset * 15 + 1}-{min((offset + 1) * 15, total)}",
         color=random.randint(0, 16777215),
