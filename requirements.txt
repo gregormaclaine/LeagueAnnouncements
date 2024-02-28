@@ -1,3 +1,4 @@
 discord.py
 python_dotenv
 requests
+colorist
