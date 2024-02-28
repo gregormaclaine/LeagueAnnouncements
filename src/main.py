@@ -157,13 +157,13 @@ def main():
         embeds = [embed_generator.announcement(e) for e in announcments]
         await interaction.followup.send(embeds=embeds)
 
-    @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
-    async def dev_set_game_mem(interaction: discord.Interaction, puuid: str, game_id: str):
-        await interaction.response.defer()
-        log_command(interaction)
+    # @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
+    # async def dev_set_game_mem(interaction: discord.Interaction, puuid: str, game_id: str):
+    #     await interaction.response.defer()
+    #     log_command(interaction)
 
-        success = await events.set_memory_to_game(puuid, game_id)
-        await interaction.followup.send('Success' if success else 'Failed')
+    #     success = await events.set_memory_to_game(puuid, game_id)
+    #     await interaction.followup.send('Success' if success else 'Failed')
 
     @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
     async def set_channel(interaction: discord.Interaction, channel_id: str):
