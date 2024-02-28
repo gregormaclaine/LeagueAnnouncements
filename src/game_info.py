@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Literal
 from datetime import datetime
 from utils import r_pad
@@ -67,22 +67,23 @@ class UserChamp:
 
 @dataclass
 class UserInfo:
-    id: str
-    summoner_name: str
-    level: int
-    icon: int
-    rank_solo: str
-    rank_flex: str
-    lp_solo: int
-    lp_flex: int
-    wins_solo: int
-    losses_solo: int
-    wins_flex: int
-    losses_flex: int
-    max_division: str
-    top_champs: List[UserChamp]
-    total_points: int
-    total_mastery: int
+    id: str = ''
+    puuid: str = ''
+    summoner_name: str = 'Unknown User'
+    level: int = 0
+    icon: int = 1
+    rank_solo: str = 'UNRANKED'
+    rank_flex: str = 'UNRANKED'
+    lp_solo: int = 0
+    lp_flex: int = 0
+    wins_solo: int = 0
+    losses_solo: int = 0
+    wins_flex: int = 0
+    losses_flex: int = 0
+    max_division: str = "UNRANKED"
+    top_champs: List[UserChamp] = field(default_factory=list)
+    total_points: int = 0
+    total_mastery: int = 0
 
     def total_solo_games(self):
         return self.wins_solo + self.losses_solo

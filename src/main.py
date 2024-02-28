@@ -3,17 +3,10 @@ from discord.ext import commands as discord_commands
 from dotenv import load_dotenv
 import os
 import embed_generator
-import riot_api
+from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager
-
-
-def riot_account_not_found(gameName, tag):
-    return f"Riot Account {gameName}#{tag} doesn't exist"
-
-
-def summoner_not_found(gameName, tag):
-    return f"Summoner {gameName}#{tag} doesn't exist"
+from game_info import UserInfo
 
 
 def main():
@@ -27,8 +20,25 @@ def main():
     region = os.getenv("REGION", "europe")
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
-    riot_client = riot_api.RiotAPI(os.getenv("RIOT_TOKEN"), server, region)
+    riot_client = RiotAPI(os.getenv("RIOT_TOKEN"), server, region)
     events = EventManager(riot_client)
+
+    async def get_user_from_name(interaction: discord.Interaction, name: str, tag: str):
+        puuid_res = await riot_client.get_riot_account_puuid(name, tag)
+        if puuid_res.error() == 'not-found':
+            await interaction.response.send_message(f"Riot Account {name}#{tag} doesn't exist")
+            return None
+        if await puuid_res.respond_if_error(interaction.response.send_message):
+            return None
+
+        data_res = await riot_client.get_profile_info(puuid_res.data["puuid"])
+        if data_res.error() == 'not-found':
+            await interaction.response.send_message(f"Summoner {name}#{tag} doesn't exist")
+            return None
+        if await puuid_res.respond_if_error(interaction.response.send_message):
+            return None
+
+        return data_res.data
 
     @bot.event
     async def on_ready():
@@ -42,23 +52,15 @@ def main():
     @bot.tree.command(name="track", description="Tracks a player")
     async def track(interaction: discord.Interaction, name: str, tag: str):
         log_command(interaction)
-        puuid = await riot_client.get_riot_account_puuid(name, tag)
-        if puuid is None:
-            await interaction.response.send_message(riot_account_not_found(name, tag))
+        user = await get_user_from_name(interaction, name, tag)
+        if user is None:
             return
-
-        data = await riot_client.get_profile_info(puuid)
-        if data["status_code"] != 200:
-            await interaction.response.send_message(summoner_not_found(name, tag))
-            return
-
-        user = data["user"]
 
         g_id = interaction.guild_id
         if g_id in tracked_players:
-            tracked_players[g_id].append(puuid)
+            tracked_players[g_id].append(user.puuid)
         else:
-            tracked_players[g_id] = [puuid]
+            tracked_players[g_id] = [user.puuid]
 
         await interaction.response.send_message(
             f'Began tracking {user.summoner_name}#{tag}.',
@@ -89,16 +91,17 @@ def main():
             del tracked_players[g_id]
 
         data = await riot_client.get_profile_info(puuid)
-        if data["status_code"] != 200:
+        if data.error():
             await interaction.response.send_message("Stopped tracking unknown player")
         else:
-            await interaction.response.send_message(f"Stopped tracking {data['user'].summoner_name}")
+            await interaction.response.send_message(f"Stopped tracking {data.data.summoner_name}")
 
     @bot.tree.command(name="list", description="Lists all tracked players")
     async def list(interaction: discord.Interaction, offset: int = 0):
         log_command(interaction)
 
         if offset < 0:
+            log(tracked_players)
             await interaction.response.send_message('Offset can\'t be negative')
             return
 
@@ -113,10 +116,12 @@ def main():
         users = []
         for puuid in tracked[offset * 15:(offset + 1) * 15]:
             data = await riot_client.get_profile_info(puuid)
-            if data["status_code"] != 200:
-                await interaction.followup.send('Couldn\'t find one of the profiles')
-                return
-            users.append(data["user"])
+            if data.error():
+                log(f'Couldn\'t find tracked profile (puuid={puuid})', 'ERROR')
+                log(data.data, 'ERROR')
+                users.append(UserInfo(summoner_name=f'Unknown<{puuid[:15]}>'))
+            else:
+                users.append(data.data)
 
         embed = embed_generator.tracked_list(users, offset, len(tracked))
         await interaction.followup.send(embed=embed)
@@ -124,17 +129,9 @@ def main():
     @bot.tree.command(name="profile", description="Shows profile of a player")
     async def profile(interaction: discord.Interaction, name: str, tag: str):
         log_command(interaction)
-
-        puuid = await riot_client.get_riot_account_puuid(name, tag)
-        if puuid is None:
-            await interaction.response.send_message(riot_account_not_found(name, tag))
-            return
-
-        data = await riot_client.get_profile_info(puuid)
-        if data["status_code"] != 200:
-            await interaction.response.send_message(summoner_not_found(name, tag))
-        else:
-            await interaction.response.send_message(embed=embed_generator.big_user(data["user"]))
+        user = await get_user_from_name(interaction, name, tag)
+        if user:
+            await interaction.response.send_message(embed=embed_generator.big_user(user))
 
     @bot.tree.command(name="run_checks", description="Manually check for new announcements")
     async def run_checks(interaction: discord.Interaction):

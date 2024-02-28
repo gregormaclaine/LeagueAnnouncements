@@ -1,6 +1,6 @@
 from typing import List, Literal, Union
 import asyncio
-from riot_api import RiotAPI
+from riot.api import RiotAPI
 from dataclasses import dataclass
 from game_info import UserInfo, GameInfo
 from logs import log
@@ -39,11 +39,11 @@ class EventManager():
 
     async def check_user(self, puuid: str) -> List[GameEvent]:
         response = await self.riot.get_profile_info(puuid)
-        if response['status_code'] != 200:
+        if response.error():
             return []
-        user: UserInfo = response['user']
+        user: UserInfo = response.data
 
-        game_ids = await self.riot.get_matches_ids_by_puuid(puuid, 10)
+        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, 10)).data
         memory = self.player_memory.get(puuid)
 
         if memory is None or memory['last_game'] not in game_ids:
@@ -126,11 +126,11 @@ class EventManager():
 
     async def set_memory_to_game(self, puuid: str, game_id: Union[str, None] = None) -> bool:
         response = await self.riot.get_profile_info(puuid)
-        if response['status_code'] != 200:
+        if response.error():
             return False
-        user: UserInfo = response['user']
+        user: UserInfo = response.data
 
-        game_ids = await self.riot.get_matches_ids_by_puuid(puuid, 10)
+        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, 10)).data
         if game_id is not None and game_id not in game_ids:
             return False
 

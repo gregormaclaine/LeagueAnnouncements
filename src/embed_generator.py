@@ -25,7 +25,8 @@ league_patch = "14.3.1"
 
 
 champion_info = requests.get(
-    f"https://ddragon.leagueoflegends.com/cdn/{league_patch}/data/en_US/champion.json"
+    f"https://ddragon.leagueoflegends.com/cdn/{
+        league_patch}/data/en_US/champion.json"
 ).json()
 champion_name = {
     int(champion_info['data'][champion]['key']): repair_champ_name(champion)
@@ -38,7 +39,6 @@ def icon_url(icon_id):
 
 
 def big_user(user: UserInfo):
-    print(user)
     embed = discord.Embed(
         title=f"Level {user.level}",
         description=f"",
@@ -88,7 +88,8 @@ def mini_user(user_info: UserInfo):
 def tracked_list(users: List[UserInfo], offset: int, total: int):
     embed = discord.Embed(
         title=f"Tracking {len(users)} Player{'s' if len(users) != 1 else ''}",
-        description=f"Showing players {offset * 15 + 1}-{min((offset + 1) * 15, total)}",
+        description=f"Showing players {
+            offset * 15 + 1}-{min((offset + 1) * 15, total)}",
         color=random.randint(0, 16777215),
     )
 
@@ -112,13 +113,17 @@ def announcement(e: GameEvent):
 
     if e.kind == 'KDA':
         embed.add_field(
-            name=f"{e.user.summoner_name} has achieved the {random_superlative()} KDA of {e.kda} in a recent match!",
-            value=f"They played as {e.champ} and the game lasted {round(e.game.duration / 60, 1)} mins.",
+            name=f"{e.user.summoner_name} has achieved the {
+                random_superlative()} KDA of {e.kda} in a recent match!",
+            value=f"They played as {e.champ} and the game lasted {
+                round(e.game.duration / 60, 1)} mins.",
             inline=False)
     elif e.kind == 'Lose Streak':
         embed.add_field(
-            name=f"{e.user.summoner_name} has just lost for the {e.streak}th time in a row!",
-            value=f"Make sure to congratulate them for this {random_superlative()} achievement!",
+            name=f"{e.user.summoner_name} has just lost for the {
+                e.streak}th time in a row!",
+            value=f"Make sure to congratulate them for this {
+                random_superlative()} achievement!",
             inline=False)
 
     time = datetime.fromtimestamp(e.game.start_time / 1000)\
