@@ -196,7 +196,13 @@ def main():
         for guild_id, channel_id in output_channels.items():
             if guild_id not in tracked_players:
                 continue
-            announcments = await events.check(tracked_players[guild_id])
+
+            try:
+                announcments = await events.check(tracked_players[guild_id])
+            except Exception as e:
+                log(f'Couldn\'t check announcements for [{guild_id}]', 'ERROR')
+                log(e, 'ERROR')
+                continue
 
             if len(announcments) == 0:
                 continue
