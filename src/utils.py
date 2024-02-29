@@ -45,3 +45,15 @@ def random_superlative():
         'prodigious',
         'extraordinary'
     ])
+
+
+def random_celebration():
+    return random.choice([
+        'Congratulations',
+        'Well Done',
+        'Compliments to',
+        'Everyone Applaud',
+        'Let\'s Cheer for',
+        '<sup> Job,',
+        '<sup> Work,'
+    ]).replace('<sup>', random_superlative().capitalize())

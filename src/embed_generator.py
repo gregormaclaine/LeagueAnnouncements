@@ -5,7 +5,7 @@ from typing import List
 from game_info import UserInfo, TrackPlayer
 from datetime import datetime
 from events import GameEvent
-from utils import random_superlative, repair_champ_name, num_of
+from utils import random_superlative, repair_champ_name, num_of, random_celebration
 
 rank_assets = {
     "UNRANKED": "https://cdn.discordapp.com/attachments/989905618494181386/989936020013334628/unranked.png",
@@ -103,7 +103,7 @@ def tracked_list(users: List[TrackPlayer], offset: int):
 
 def announcement(e: GameEvent):
     embed = discord.Embed(
-        title=f"Congratulations {e.user.summoner_name}!",
+        title=f"{random_celebration()} {e.user.summoner_name}!",
         description=f"",
         color=random.randint(0, 16777215),
     )
@@ -122,7 +122,7 @@ def announcement(e: GameEvent):
             name=f"{e.user.summoner_name} has achieved the {
                 random_superlative()} KDA of {e.kda} in a recent match!",
             value=f"They played as {e.champ} and the game lasted {
-                round(e.game.duration / 60, 1)} mins and got a score of {player.score()}",
+                round(e.game.duration / 60, 1)} mins and got a score of {player.score()}.",
             inline=False)
     elif e.kind == 'Lose Streak':
         embed.add_field(
