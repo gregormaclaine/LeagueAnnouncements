@@ -112,11 +112,12 @@ def announcement(e: GameEvent):
     embed.set_thumbnail(url=rank_assets[e.user.max_division.upper()])
 
     if e.kind == 'KDA':
+        player = e.game.get_player(e.user.id)
         embed.add_field(
             name=f"{e.user.summoner_name} has achieved the {
                 random_superlative()} KDA of {e.kda} in a recent match!",
             value=f"They played as {e.champ} and the game lasted {
-                round(e.game.duration / 60, 1)} mins.",
+                round(e.game.duration / 60, 1)} mins and got a score of {player.score()}",
             inline=False)
     elif e.kind == 'Lose Streak':
         embed.add_field(

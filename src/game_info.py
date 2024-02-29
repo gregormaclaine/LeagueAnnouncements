@@ -21,6 +21,9 @@ class PlayerInfo:
     multikills: List[int]
     position: Literal['UTILITY', 'BOTTOM', 'MIDDLE', 'JUNGLE', 'TOP']
 
+    def score(self) -> str:
+        return f'{self.kills}/{self.deaths}/{self.assists}'
+
     def kda(self) -> str:
         if self.deaths == 0:
             return "Perfect"
@@ -36,6 +39,10 @@ class GameInfo:
     participants: List[PlayerInfo]
     queue_type: Literal['Draft', 'Solo/Duo',
                         'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
+
+    def get_player(self, id: str):
+        p = [p for p in self.participants if p.id == id]
+        return p[0] if len(p) else None
 
     def __str__(self) -> str:
         output = datetime.fromtimestamp(self.start_time / 1000)\
