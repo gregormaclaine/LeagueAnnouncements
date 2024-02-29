@@ -134,7 +134,7 @@ def announcement(e: GameEvent):
     elif e.kind == 'Rank Change':
         embed.add_field(
             name=f"{e.user.summoner_name} has successfully {
-                e.rank_dir()} to {e.new_rank.capitalize()} from {e.old_rank.capitalize()}!",
+                e.rank_dir()} from {e.old_rank.upper()} to {e.new_rank.upper()}!",
             value=f"Make sure to congratulate them for this {
                 random_superlative()} achievement!",
             inline=False)
