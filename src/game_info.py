@@ -72,6 +72,10 @@ class UserChamp:
     chest: bool
 
 
+type RankOption = Literal["UNRANKED", "IRON", "BRONZE", "SILVER", "GOLD",
+                          "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"]
+
+
 @dataclass
 class UserInfo:
     id: str = ''
@@ -79,15 +83,15 @@ class UserInfo:
     summoner_name: str = 'Unknown User'
     level: int = 0
     icon: int = 1
-    rank_solo: str = 'UNRANKED'
-    rank_flex: str = 'UNRANKED'
+    rank_solo: RankOption = 'UNRANKED'
+    rank_flex: RankOption = 'UNRANKED'
     lp_solo: int = 0
     lp_flex: int = 0
     wins_solo: int = 0
     losses_solo: int = 0
     wins_flex: int = 0
     losses_flex: int = 0
-    max_division: str = "UNRANKED"
+    max_division: RankOption = "UNRANKED"
     top_champs: List[UserChamp] = field(default_factory=list)
     total_points: int = 0
     total_mastery: int = 0

@@ -109,7 +109,11 @@ def announcement(e: GameEvent):
     )
     embed.set_author(name=f'{e.user.summoner_name} (Lvl {e.user.level})',
                      icon_url=icon_url(e.user.icon))
-    embed.set_thumbnail(url=rank_assets[e.user.max_division.upper()])
+
+    if e.kind == 'Rank Change':
+        embed.set_thumbnail(url=rank_assets[e.new_rank.upper()])
+    else:
+        embed.set_thumbnail(url=rank_assets[e.user.max_division.upper()])
 
     if e.kind == 'KDA':
         player = e.game.get_player(e.user.id)
@@ -123,6 +127,13 @@ def announcement(e: GameEvent):
         embed.add_field(
             name=f"{e.user.summoner_name} has just lost for the {
                 e.streak}th time in a row!",
+            value=f"Make sure to congratulate them for this {
+                random_superlative()} achievement!",
+            inline=False)
+    elif e.kind == 'Rank Change':
+        embed.add_field(
+            name=f"{e.user.summoner_name} has successfully {
+                e.rank_dir()} to {e.new_rank.capitalize()} from {e.old_rank.capitalize()}!",
             value=f"Make sure to congratulate them for this {
                 random_superlative()} achievement!",
             inline=False)

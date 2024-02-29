@@ -36,6 +36,25 @@ class RiotAPI:
 
         self.sem = Semaphore(5)
 
+    @classmethod
+    def is_rank_growth(cls, rank1: str, rank2: str) -> bool:
+        if rank1 == 'UNRANKED':
+            return True
+        elif rank2 == 'UNRANKED':
+            return False
+
+        r1, t1 = rank1.split(' ')
+        r2, t2 = rank2.split(' ')
+
+        wdiff = cls.queueWeight.get(r1, 0) - cls.queueWeight(r2, 0)
+        if wdiff > 0:
+            return False
+        elif wdiff < 0:
+            return True
+
+        tiers = ['I', 'II', 'III', 'IV']
+        return tiers.index(t1) < tiers.index(t2)
+
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key

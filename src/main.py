@@ -24,7 +24,7 @@ def main():
     intents = discord.Intents.default()
 
     tracked_players: dict[str, List[TrackPlayer]] = {}
-    output_channels = {}
+    output_channels: dict[int, int] = {}
 
     # Riot API constants
     server = os.getenv("SERVER", "euw1")
