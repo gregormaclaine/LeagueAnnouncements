@@ -7,7 +7,7 @@ from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager, GameEvent
 from game_info import TrackPlayer
-from typing import List
+from typing import List, Literal
 from utils import num_of
 
 load_dotenv()
@@ -67,7 +67,8 @@ def main():
                 "League of Legends")
         )
         log('Starting automatic announcement checker')
-        await automatic_announcement_check.start()
+        if not automatic_announcement_check.is_running():
+            await automatic_announcement_check.start()
 
     @bot.tree.command(name="track", description="Tracks a player")
     async def track(interaction: discord.Interaction, name: str, tag: str):
@@ -250,23 +251,55 @@ def main():
         if not silent:
             await channel.send('I will now send announcements here')
 
-    @bot.tree.command(name="checker_status", description="Check information about the automatic checker")
-    async def checker_status(interaction: discord.Interaction):
+    @bot.tree.command(name="autochecker", description="Inspect and modify the automatic checker")
+    async def autochecker(interaction: discord.Interaction, command: Literal['status', 'pause', 'unpause', 'start']):
         log_command(interaction)
         is_running = automatic_announcement_check.is_running()
         next_time = automatic_announcement_check.next_iteration
-        current_loop = automatic_announcement_check.current_loop
 
-        if next_time is None:
-            next_time = 'Unknown'
-        else:
-            next_time = next_time.strftime("%I:%M:%S %p")
+        if command == 'status':
+            current_loop = automatic_announcement_check.current_loop
 
-        if not is_running:
-            await interaction.response.send_message(f'Checker is not running')
+            if next_time is None:
+                next_time = 'PAUSED'
+            else:
+                next_time = next_time.strftime("%I:%M:%S %p")
+
+            if not is_running:
+                await interaction.response.send_message(f'Autochecker is not running')
+            else:
+                await interaction.response.send_message(
+                    f'Autochecker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
+
+        elif command == 'start':
+            if is_running:
+                await interaction.response.send_message('Autochecker is already running')
+                return
+            await interaction.response.send_message('Autochecker has restarted')
+            log('Autochecker - restart')
+            await automatic_announcement_check.start()
+
+        elif command == 'unpause':
+            if not is_running:
+                await interaction.response.send_message('Autochecker is not running')
+                return
+            if next_time is None:
+                automatic_announcement_check.restart()
+                log('Autochecker - on')
+                await interaction.response.send_message('Autochecker has been unpaused')
+            else:
+                await interaction.response.send_message('Autochecker is not paused')
+
+        elif command == 'pause':
+            if not is_running or next_time is None:
+                await interaction.response.send_message('Autochecker is not running')
+                return
+            automatic_announcement_check.stop()
+            log('Autochecker - off')
+            await interaction.response.send_message('Autochecker has been paused')
+
         else:
-            await interaction.response.send_message(
-                f'Checker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
+            await interaction.response.send_message('Invalid command')
 
     @bot.tree.command(name="claim_profile", description="Claim your account to get pinged for your own achievements")
     async def claim_profile(interaction: discord.Interaction, index: int):
