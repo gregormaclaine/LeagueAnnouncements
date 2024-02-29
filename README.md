@@ -1,33 +1,42 @@
 # League of Legends Discord bot
 
-League Stats bot for Discord is a simple tool to check your last games, match history and profile. It's created to allow me and my friends to show our best games on our Discord server. Right now bot has three commands. First allows you to check your profile info, such as summoner level, rank and your favourite champs. Second one is designed to show detailed stats about one game. The third command allows user to see up to 20 previous matches of a player with basic stats of that summoner.
+A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement, such as losing 3 or more games in a row or getting a KDA < 1.
 
 ## List of commands:
+
 ```
 /profile {player} {tag} - See your rank, mastery and favourite champs
-/match {player} {tag} {1-100?} - Your game from history, if no ID given - last
-/history {player} {tag} {1-20?} - Check your game history
+/track {player} {tag} - Begin tracking achievements of this player
+/untrack {index} - Stop tracking the player at this index in the list
+/list {offset} - List all tracked players (15 at a time)
+
+/claim_profile {index} - Links discord account to tracked player (Pings you when announcements involve you)
+
+/set_channel {channel} {silent=false} - Set channel to which the announcements will be sent
+/run_checks - Manually check for new announcements (This is done automatically every 5 minutes)
+
 ```
 
-## .env file:
+### Dev commands:
+
 ```
-DISCORD_TOKEN=YOUR_DICORD_TOKEN
-RIOT_TOKEN=YOUR_RIOT_TOKEN
-(Optional) SERVER=eun1
-(Optional) REGION=europe
+/track_many {users} - Bulk track multiple users (player#tag,player2#tag2...)
+/checker_status - Get information about the automatic checker
 ```
 
 ## Running the bot:
+
 Your can run this bot using Docker
+
 ```bash
-docker compose up -d 
+docker compose up -d
 ```
+
 or local Python interpreter
+
 ```bash
 pip install -r requirements.txt
 python ./src/main.py
 ```
-`.env` file should be located in the root directory. Alternatively, you can use shell environment variables.
 
-### Try it out!
-https://discord.com/api/oauth2/authorize?client_id=989636329572810782&permissions=18432&scope=bot%20applications.commands
+`.env` file should be located in the root directory. Alternatively, you can use shell environment variables.
