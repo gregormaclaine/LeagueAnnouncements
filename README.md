@@ -21,7 +21,11 @@ A Discord bot that allows you to track your own League of Legends accounts and a
 
 ```
 /track_many {users} - Bulk track multiple users (player#tag,player2#tag2...)
-/checker_status - Get information about the automatic checker
+
+/autochecker status - Get information about the automatic checker
+/autochecker pause - Pauses the automatic checker
+/autochecker unpause - Unpauses the automatic checker
+/autochecker start - Restarts the checker if it has shutdown due to an error
 ```
 
 ## Running the bot:
