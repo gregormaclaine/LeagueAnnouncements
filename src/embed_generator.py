@@ -111,7 +111,8 @@ def announcement(e: GameEvent):
                      icon_url=icon_url(e.user.icon))
 
     if e.kind == 'Rank Change':
-        embed.set_thumbnail(url=rank_assets[e.new_rank.upper()])
+        rank = e.new_rank.split(' ')[0]
+        embed.set_thumbnail(url=rank_assets[rank.upper()])
     else:
         embed.set_thumbnail(url=rank_assets[e.user.max_division.upper()])
 
