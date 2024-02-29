@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Literal, TypedDict
+from typing import List, Literal, TypedDict, Optional
 from datetime import datetime
 from utils import r_pad
 
@@ -130,3 +130,4 @@ class TrackPlayer(TypedDict):
     name: str
     tag: str
     level: int
+    user_id: Optional[int]

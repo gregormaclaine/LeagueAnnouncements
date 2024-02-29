@@ -83,7 +83,8 @@ def main():
             'puuid': user.puuid,
             'name': name,
             'tag': tag,
-            'level': user.level
+            'level': user.level,
+            'user_id': None
         })
 
         await interaction.response.send_message(
@@ -162,7 +163,10 @@ def main():
             return
 
         embeds = [embed_generator.announcement(e) for e in announcments]
-        await interaction.followup.send(embeds=embeds)
+        puuids = [e.user.puuid for e in announcments]
+        discord_ids = [t['user_id'] for t in tracked if t['puuid'] in puuids]
+        mentions = ' '.join(map(lambda id: f'<@{id}>', discord_ids))
+        await interaction.followup.send(mentions, embeds=embeds)
 
     # @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
     # async def dev_set_game_mem(interaction: discord.Interaction, puuid: str, game_id: str):
@@ -206,6 +210,28 @@ def main():
         else:
             await interaction.response.send_message(
                 f'Checker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
+
+    @bot.tree.command(name="claim_profile", description="Claim your account to get pinged for your own achievements")
+    async def claim_profile(interaction: discord.Interaction, index: int):
+        log_command(interaction)
+        if index < 1:
+            await interaction.response.send_message(f'Index must be a non-negative integer')
+            return
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        if index > len(tracked):
+            await interaction.response.send_message(f'Index is out of range')
+            return
+
+        index -= 1
+
+        tracked[index]['user_id'] = interaction.user.id
+        await interaction.response.send_message(f"You have claimed {tracked[index]['name']}#{tracked[index]['tag']}")
 
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():

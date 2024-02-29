@@ -101,7 +101,7 @@ def tracked_list(users: List[TrackPlayer], offset: int):
     return embed
 
 
-def announcement(e: GameEvent):
+def announcement(e: GameEvent, tracked_player: TrackPlayer):
     embed = discord.Embed(
         title=f"Congratulations {e.user.summoner_name}!",
         description=f"",
