@@ -225,7 +225,7 @@ def main():
     #     await interaction.followup.send('Success' if success else 'Failed')
 
     @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
-    async def set_channel(interaction: discord.Interaction, channel_id: str):
+    async def set_channel(interaction: discord.Interaction, channel_id: str, silent: bool = False):
         log_command(interaction)
         old_id = output_channels.get(interaction.guild_id, None)
 
@@ -239,7 +239,8 @@ def main():
         await interaction.response.send_message(
             'Channel Updated' if old_id else 'Channel Set')
 
-        await channel.send('I will now send announcements here')
+        if not silent:
+            await channel.send('I will now send announcements here')
 
     @bot.tree.command(name="checker_status", description="Check information about the automatic checker")
     async def checker_status(interaction: discord.Interaction):
