@@ -126,7 +126,7 @@ def announcement(e: GameEvent):
     elif e.kind == 'Lose Streak':
         embed.add_field(
             name=f"{e.user.summoner_name} has just lost for the {
-                e.streak}th time in a row!",
+                e.streak}{'rd' if e.streak == 3 else 'th'} time in a row!",
             value=f"Make sure to congratulate them for this {
                 random_superlative()} achievement!",
             inline=False)
