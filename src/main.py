@@ -106,7 +106,7 @@ def main():
         if len(names) > 5:
             await interaction.response.defer()
 
-        added = 0
+        added_puuids = []
         for summoner in names:
             try:
                 name, tag = summoner.split('#')
@@ -130,14 +130,16 @@ def main():
                 'level': user.level,
                 'user_id': None
             })
-            added += 1
+            added_puuids.append(user.puuid)
 
         message = f'Request handled successfully: {
-            num_of('player', added)} added'
+            num_of('player', len(added_puuids))} added'
         if len(names) > 5:
             await interaction.followup.send(message)
         else:
             await interaction.response.send_message(message)
+
+        await events.check(added_puuids, quiet=True)
 
     @bot.tree.command(name="untrack", description="Stops tracking a player")
     async def untrack(interaction: discord.Interaction, index: int):
