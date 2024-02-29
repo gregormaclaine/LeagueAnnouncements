@@ -11,6 +11,7 @@ A Discord bot that allows you to track your own League of Legends accounts and a
 /list {offset} - List all tracked players (15 at a time)
 
 /claim_profile {index} - Links discord account to tracked player (Pings you when announcements involve you)
+/unclaim_profile {index} - Unlinks discord account from tracked player
 
 /set_channel {channel} {silent=false} - Set channel to which the announcements will be sent
 /run_checks - Manually check for new announcements (This is done automatically every 5 minutes)

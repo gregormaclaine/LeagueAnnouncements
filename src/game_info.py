@@ -134,4 +134,4 @@ class TrackPlayer(TypedDict):
     name: str
     tag: str
     level: int
-    user_id: Optional[int]
+    claimed_users: set[int]

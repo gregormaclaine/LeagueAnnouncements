@@ -8,7 +8,7 @@ from logs import log, log_command
 from events import EventManager, GameEvent
 from game_info import TrackPlayer
 from typing import List, Literal
-from utils import num_of
+from utils import num_of, flat
 
 load_dotenv()
 
@@ -38,8 +38,9 @@ def main():
     def get_mentions_from_events(events: List[GameEvent], guild_id: str) -> str:
         puuids = [e.user.puuid for e in events]
         tracked = tracked_players[guild_id]
-        discord_ids = [t['user_id'] for t in tracked if t['puuid'] in puuids]
-        return ' '.join(map(lambda id: f'<@{id}>', discord_ids))
+        discord_ids = flat([t['claimed_users']
+                           for t in tracked if t['puuid'] in puuids])
+        return ' '.join(map(lambda id: f'<@{id}>', list(set(discord_ids))))
 
     async def get_user_from_name(interaction: discord.Interaction, name: str, tag: str):
         puuid_res = await riot_client.get_riot_account_puuid(name, tag)
@@ -92,7 +93,7 @@ def main():
             'name': name,
             'tag': tag,
             'level': user.level,
-            'user_id': None
+            'claimed_users': set()
         })
 
         await interaction.response.send_message(
@@ -135,7 +136,7 @@ def main():
                 'name': name,
                 'tag': tag,
                 'level': user.level,
-                'user_id': None
+                'claimed_users': set()
             })
             added_puuids.append(user.puuid)
 
@@ -320,8 +321,34 @@ def main():
 
         index -= 1
 
-        tracked[index]['user_id'] = interaction.user.id
+        tracked[index]['claimed_users'].add(interaction.user.id)
         await interaction.response.send_message(f"You have claimed {tracked[index]['name']}#{tracked[index]['tag']}")
+
+    @bot.tree.command(name="unclaim_profile", description="Unclaim a profile to stop being pinged (Weak)")
+    async def unclaim_profile(interaction: discord.Interaction, index: int):
+        log_command(interaction)
+        if index < 1:
+            await interaction.response.send_message(f'Index must be a non-negative integer')
+            return
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        if index > len(tracked):
+            await interaction.response.send_message(f'Index is out of range')
+            return
+
+        index -= 1
+
+        claimed = tracked[index]['claimed_users']
+        if interaction.user.id in claimed:
+            claimed.remove(interaction.user.id)
+            await interaction.response.send_message(f"You have unclaimed {tracked[index]['name']}#{tracked[index]['tag']}")
+        else:
+            await interaction.response.send_message(f"You have not claimed {tracked[index]['name']}#{tracked[index]['tag']}")
 
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():
