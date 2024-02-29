@@ -30,12 +30,14 @@ class EventManager():
         self.riot = riot
         self.player_memory = {}
 
-    async def check(self, puuids: List[str]):
-        log('Running event checks...')
+    async def check(self, puuids: List[str], quiet=False):
+        if not quiet:
+            log('Running event checks...')
         tasks = [self.check_user(puuid) for puuid in puuids]
         events = flat(await asyncio.gather(*tasks))
-        log(f'Completed event checks ({
-            num_of('new announcement', len(events))})')
+        if not quiet:
+            log(f'Completed event checks ({
+                num_of('new announcement', len(events))})')
         return events
 
     async def check_user(self, puuid: str) -> List[GameEvent]:

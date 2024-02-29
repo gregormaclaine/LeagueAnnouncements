@@ -2,7 +2,7 @@ import discord
 import requests
 import random
 from typing import List
-from game_info import UserInfo
+from game_info import UserInfo, TrackPlayer
 from datetime import datetime
 from events import GameEvent
 from utils import random_superlative, repair_champ_name, num_of
@@ -85,17 +85,17 @@ def mini_user(user_info: UserInfo):
     return embed
 
 
-def tracked_list(users: List[UserInfo], offset: int, total: int):
+def tracked_list(users: List[TrackPlayer], offset: int):
     embed = discord.Embed(
         title=f"Tracking {num_of('Player', len(users))}",
         description=f"Showing players {
-            offset * 15 + 1}-{min((offset + 1) * 15, total)}",
+            offset * 15 + 1}-{min((offset + 1) * 15, len(users))}",
         color=random.randint(0, 16777215),
     )
 
-    for i, u in enumerate(users):
+    for i, u in enumerate(users[offset * 15:(offset + 1) * 15]):
         index = offset * 15 + i + 1
-        user_line = f"{index}. {u.summoner_name} (Lvl {u.level})"
+        user_line = f"{index}. {u['name']}#{u['tag']} (Lvl {u['level']})"
         embed.add_field(name=user_line, value="", inline=False)
 
     return embed

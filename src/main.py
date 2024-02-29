@@ -6,7 +6,8 @@ import embed_generator
 from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager
-from game_info import UserInfo
+from game_info import TrackPlayer
+from typing import List
 
 load_dotenv()
 
@@ -22,7 +23,7 @@ if RIOT_TOKEN is None or DISCORD_TOKEN is None:
 def main():
     intents = discord.Intents.default()
 
-    tracked_players = {}
+    tracked_players: dict[str, List[TrackPlayer]] = {}
     output_channels = {}
 
     # Riot API constants
@@ -70,14 +71,26 @@ def main():
 
         g_id = interaction.guild_id
         if g_id in tracked_players:
-            tracked_players[g_id].append(user.puuid)
+            matches = [p for p in tracked_players[g_id]
+                       if p["puuid"] == user.puuid]
+            if len(matches):
+                await interaction.response.send_message(f'Already tracking {user.summoner_name}#{tag}')
+                return
         else:
-            tracked_players[g_id] = [user.puuid]
+            tracked_players[g_id] = []
+
+        tracked_players[g_id].append({
+            'puuid': user.puuid,
+            'name': name,
+            'tag': tag,
+            'level': user.level
+        })
 
         await interaction.response.send_message(
             f'Began tracking {user.summoner_name}#{tag}.',
             embed=embed_generator.mini_user(user)
         )
+        await events.check([user.puuid], quiet=True)
 
     @bot.tree.command(name="untrack", description="Stops tracking a player")
     async def untrack(interaction: discord.Interaction, index: int):
@@ -97,16 +110,13 @@ def main():
             await interaction.response.send_message(f'Index is out of range')
             return
 
-        puuid = tracked.pop(index - 1)
+        deleted_player = tracked.pop(index - 1)
 
         if len(tracked) == 0:
             del tracked_players[g_id]
 
-        data = await riot_client.get_profile_info(puuid)
-        if data.error():
-            await interaction.response.send_message("Stopped tracking unknown player")
-        else:
-            await interaction.response.send_message(f"Stopped tracking {data.data.summoner_name}")
+        player_name = f"{deleted_player['name']}#{deleted_player['tag']}"
+        await interaction.response.send_message(f"Stopped tracking {player_name}")
 
     @bot.tree.command(name="list", description="Lists all tracked players")
     async def list(interaction: discord.Interaction, offset: int = 0):
@@ -123,20 +133,8 @@ def main():
             return
         tracked = tracked_players[g_id]
 
-        await interaction.response.defer()
-
-        users = []
-        for puuid in tracked[offset * 15:(offset + 1) * 15]:
-            data = await riot_client.get_profile_info(puuid)
-            if data.error():
-                log(f'Couldn\'t find tracked profile (puuid={puuid})', 'ERROR')
-                log(data.data, 'ERROR')
-                users.append(UserInfo(summoner_name=f'Unknown<{puuid[:15]}>'))
-            else:
-                users.append(data.data)
-
-        embed = embed_generator.tracked_list(users, offset, len(tracked))
-        await interaction.followup.send(embed=embed)
+        embed = embed_generator.tracked_list(tracked, offset)
+        await interaction.response.send_message(embed=embed)
 
     @bot.tree.command(name="profile", description="Shows profile of a player")
     async def profile(interaction: discord.Interaction, name: str, tag: str):
@@ -157,7 +155,7 @@ def main():
 
         await interaction.response.defer()
 
-        announcments = await events.check(tracked)
+        announcments = await events.check([p['puuid'] for p in tracked])
 
         if len(announcments) == 0:
             await interaction.followup.send('No new announcements')
@@ -209,14 +207,14 @@ def main():
             await interaction.response.send_message(
                 f'Checker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
 
-    @tasks.loop(seconds=300)  # repeat after every 5 mins
+    @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():
         for guild_id, channel_id in output_channels.items():
             if guild_id not in tracked_players:
                 continue
 
             try:
-                announcments = await events.check(tracked_players[guild_id])
+                announcments = await events.check([p['puuid'] for p in tracked_players[guild_id]])
             except Exception as e:
                 log(f'Couldn\'t check announcements for [{guild_id}]', 'ERROR')
                 log(e, 'ERROR')

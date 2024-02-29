@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Literal
+from typing import List, Literal, TypedDict
 from datetime import datetime
 from utils import r_pad
 
@@ -123,3 +123,10 @@ class UserInfo:
         if self.total_flex_games() > 0:
             s += f', {self.flex_winrate()} WR'
         return s
+
+
+class TrackPlayer(TypedDict):
+    puuid: str
+    name: str
+    tag: str
+    level: int
