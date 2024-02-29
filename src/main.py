@@ -229,7 +229,11 @@ def main():
         log_command(interaction)
         old_id = output_channels.get(interaction.guild_id, None)
 
-        channel = bot.get_channel(int(channel_id))
+        try:
+            channel = bot.get_channel(int(channel_id))
+        except:
+            await interaction.response.send_message('Could not access channel')
+            return
         if channel is None:
             await interaction.response.send_message('Channel not found')
             return
