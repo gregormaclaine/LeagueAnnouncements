@@ -8,6 +8,7 @@ from logs import log, log_command
 from events import EventManager
 from game_info import TrackPlayer
 from typing import List
+from utils import num_of
 
 load_dotenv()
 
@@ -92,6 +93,51 @@ def main():
             embed=embed_generator.mini_user(user)
         )
         await events.check([user.puuid], quiet=True)
+
+    @bot.tree.command(name="track_many", description="Tracks multiple players at once (For dev use)")
+    async def track_many(interaction: discord.Interaction, names: str):
+        log_command(interaction)
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            tracked_players[g_id] = []
+
+        names = names.split(',')
+        if len(names) > 5:
+            await interaction.response.defer()
+
+        added = 0
+        for summoner in names:
+            try:
+                name, tag = summoner.split('#')
+            except ValueError:
+                await interaction.response.send_message('Error: Invalid request')
+                return
+
+            user = await get_user_from_name(interaction, name, tag)
+            if user is None:
+                continue
+
+            matches = [p for p in tracked_players[g_id]
+                       if p["puuid"] == user.puuid]
+            if len(matches):
+                continue
+
+            tracked_players[g_id].append({
+                'puuid': user.puuid,
+                'name': name,
+                'tag': tag,
+                'level': user.level,
+                'user_id': None
+            })
+            added += 1
+
+        message = f'Request handled successfully: {
+            num_of('player', added)} added'
+        if len(names) > 5:
+            await interaction.followup.send(message)
+        else:
+            await interaction.response.send_message(message)
 
     @bot.tree.command(name="untrack", description="Stops tracking a player")
     async def untrack(interaction: discord.Interaction, index: int):
