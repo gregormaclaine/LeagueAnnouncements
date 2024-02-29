@@ -191,6 +191,24 @@ def main():
 
         await channel.send('I will now send announcements here')
 
+    @bot.tree.command(name="checker_status", description="Check information about the automatic checker")
+    async def checker_status(interaction: discord.Interaction):
+        log_command(interaction)
+        is_running = automatic_announcement_check.is_running()
+        next_time = automatic_announcement_check.next_iteration
+        current_loop = automatic_announcement_check.current_loop
+
+        if next_time is None:
+            next_time = 'Unknown'
+        else:
+            next_time = next_time.strftime("%I:%M:%S %p")
+
+        if not is_running:
+            await interaction.response.send_message(f'Checker is not running')
+        else:
+            await interaction.response.send_message(
+                f'Checker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
+
     @tasks.loop(seconds=300)  # repeat after every 5 mins
     async def automatic_announcement_check():
         for guild_id, channel_id in output_channels.items():
