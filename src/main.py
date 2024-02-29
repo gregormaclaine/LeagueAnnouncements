@@ -5,7 +5,7 @@ import os
 import embed_generator
 from riot.api import RiotAPI
 from logs import log, log_command
-from events import EventManager
+from events import EventManager, GameEvent
 from game_info import TrackPlayer
 from typing import List
 from utils import num_of
@@ -34,6 +34,12 @@ def main():
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
     riot_client = RiotAPI(RIOT_TOKEN, server, region)
     events = EventManager(riot_client)
+
+    def get_mentions_from_events(events: List[GameEvent], guild_id: str) -> str:
+        puuids = [e.user.puuid for e in events]
+        tracked = tracked_players[guild_id]
+        discord_ids = [t['user_id'] for t in tracked if t['puuid'] in puuids]
+        return ' '.join(map(lambda id: f'<@{id}>', discord_ids))
 
     async def get_user_from_name(interaction: discord.Interaction, name: str, tag: str):
         puuid_res = await riot_client.get_riot_account_puuid(name, tag)
@@ -211,9 +217,7 @@ def main():
             return
 
         embeds = [embed_generator.announcement(e) for e in announcments]
-        puuids = [e.user.puuid for e in announcments]
-        discord_ids = [t['user_id'] for t in tracked if t['puuid'] in puuids]
-        mentions = ' '.join(map(lambda id: f'<@{id}>', discord_ids))
+        mentions = get_mentions_from_events(announcments, g_id)
         await interaction.followup.send(mentions, embeds=embeds)
 
     # @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
@@ -303,7 +307,8 @@ def main():
                 continue
 
             embeds = [embed_generator.announcement(e) for e in announcments]
-            await bot.get_channel(channel_id).send(embeds=embeds)
+            mentions = get_mentions_from_events(announcments, guild_id)
+            await bot.get_channel(channel_id).send(mentions, embeds=embeds)
 
     bot.run(DISCORD_TOKEN)
 
