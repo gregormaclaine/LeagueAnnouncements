@@ -268,6 +268,9 @@ def main():
                 await interaction.response.send_message(
                     f'Autochecker is running:\n- Current Loop: {current_loop}\n- Next Iteration: {next_time}')
 
+        elif interaction.user.id != CONFIG.OWNER_DISCORD_ID:
+            await interaction.response.send_message('You do not have the permissions to use this command')
+
         elif command == 'start':
             if is_running:
                 await interaction.response.send_message('Autochecker is already running')
@@ -375,6 +378,15 @@ def main():
             name = user.display_name if user else 'Unknown User'
             msg += f'\n- {name}'
         await interaction.response.send_message(msg)
+
+    # @bot.tree.command(name="sync", description="Refresh bot commands")
+    # async def sync(interaction: discord.Interaction):
+    #     log_command(interaction)
+    #     if interaction.user.id != CONFIG.OWNER_DISCORD_ID:
+    #         await interaction.response.send_message('You do not have the permissions to use this command')
+    #     await interaction.response.defer()
+    #     await bot.tree.sync(guild=discord.Object(interaction.guild_id))
+    #     await interaction.followup.send('Commands Synced')
 
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():

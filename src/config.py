@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from typing import Optional
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -11,6 +12,7 @@ class Config():
     SERVER: str
     REGION: str
     FILES_PATH: str
+    OWNER_DISCORD_ID: Optional[int]
 
 
 def get_config():
@@ -36,10 +38,16 @@ def get_config():
         if not os.path.exists(FILES_PATH):
             os.makedirs(FILES_PATH)
 
+    try:
+        OWNER_DISCORD_ID = int(os.getenv('OWNER_DISCORD_ID'))
+    except TypeError:
+        OWNER_DISCORD_ID = None
+
     return Config(
         RIOT_TOKEN,
         DISCORD_TOKEN,
         os.getenv("SERVER", "euw1"),
         os.getenv("REGION", "europe"),
-        FILES_PATH
+        FILES_PATH,
+        OWNER_DISCORD_ID
     )
