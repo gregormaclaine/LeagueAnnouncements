@@ -207,7 +207,11 @@ if __name__ == '__main__':
     riot_client = RiotAPI(os.getenv('RIOT_TOKEN'), 'euw1', 'europe')
     events = EventManager(riot_client)
 
-    user = asyncio.run(riot_client.get_riot_account_puuid('alfais', 'at1'))
+    user = asyncio.run(
+        riot_client.get_riot_account_puuid('D0M0V0N', 'cbt'))
+    if user.error():
+        print('Error:', user.error())
+        exit(1)
     puuid = user.data['puuid']
     print(puuid)
     asyncio.run(events.set_memory_to_game(puuid, offset=2))

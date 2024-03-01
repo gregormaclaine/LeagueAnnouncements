@@ -24,7 +24,7 @@ if RIOT_TOKEN is None or DISCORD_TOKEN is None:
 def main():
     intents = discord.Intents.default()
 
-    tracked_players: dict[str, List[TrackPlayer]] = {}
+    tracked_players: dict[int, List[TrackPlayer]] = {}
     output_channels: dict[int, int] = {}
 
     # Riot API constants
@@ -35,12 +35,12 @@ def main():
     riot_client = RiotAPI(RIOT_TOKEN, server, region)
     events = EventManager(riot_client)
 
-    def get_mentions_from_events(events: List[GameEvent], guild_id: str) -> str:
+    def get_mentions_from_events(events: List[GameEvent], guild_id: int) -> str:
         puuids = [e.user.puuid for e in events]
         tracked = tracked_players[guild_id]
         discord_ids = flat([t['claimed_users']
                            for t in tracked if t['puuid'] in puuids])
-        return ' '.join(map(lambda id: f'<@{id}>', list(set(discord_ids))))
+        return ' '.join(map(lambda id: f'<@{id}>', [*set(discord_ids)]))
 
     async def get_user_from_name(interaction: discord.Interaction, name: str, tag: str):
         puuid_res = await riot_client.get_riot_account_puuid(name, tag)
