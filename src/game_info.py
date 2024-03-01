@@ -35,7 +35,7 @@ class GameInfo:
     id: int
     start_time: int
     duration: int
-    winner: Literal['Red', 'Blue']
+    winner: Literal['Red', 'Blue', 'Remake']
     participants: List[PlayerInfo]
     queue_type: Literal['Draft', 'Solo/Duo',
                         'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
@@ -49,7 +49,13 @@ class GameInfo:
             .strftime("%a, %d %b %Y %I:%M%p")
 
         output += f' ({round(self.duration / 60, 1)} mins)'
-        output += f' - {"🔴" if self.winner == "Red" else "🔵"} Wins!'
+
+        emoji = {
+            "Red": "🔴",
+            "Blue": "🔵",
+            "Remake": "⚪"
+        }[self.winner]
+        output += f' - {emoji} Wins!'
 
         red_team = [f'{p.summoner_name} ({p.champion_name})'
                     for p in self.participants if p.team == 'Red']

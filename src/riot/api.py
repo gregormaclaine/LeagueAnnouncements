@@ -160,6 +160,9 @@ class RiotAPI:
             )
             participants.append(player_info)
 
+        if game_duration < 300:
+            winner = 'Remake'
+
         return GameInfo(match_id, start_time, game_duration,
                         winner, participants, queue_type)
 

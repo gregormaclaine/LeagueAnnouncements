@@ -75,7 +75,7 @@ class EventManager():
         if memory is None or memory['last_game'] not in game_ids:
             log(f'Resetting player memory for [{
                 user.summoner_name}]', source='main.events')
-            await self.remember_game(user, game_ids[0], game_ids[1:])
+            await self.remember_history(user, game_ids)
             return []
 
         new_game_ids = game_ids[:game_ids.index(memory['last_game'])]
@@ -109,7 +109,7 @@ class EventManager():
                 new_rank=user.rank_solo
             ))
 
-        await self.remember_game(user, game_ids[0], game_ids[1:])
+        await self.remember_history(user, game_ids)
 
         return events
 
@@ -156,26 +156,31 @@ class EventManager():
         p = [p for p in game.participants if p.id == user_id]
         return (p[0].team == game.winner) if p else True
 
-    async def remember_game(self, user: UserInfo, game_id: str, history: List[str]) -> None:
-        match = await self.riot.get_match_info_by_id(game_id)
-        lose_streak = 0 if self.did_user_win(user.id, match) else 1
+    async def remember_history(self, user: UserInfo, history: List[str]) -> None:
+        lose_streak = 0
+        last_played = 0
 
-        if lose_streak:
-            for prev_game_id in history:
-                prev_match = await self.riot.get_match_info_by_id(prev_game_id)
-                if self.did_user_win(user.id, prev_match):
-                    break
-                lose_streak += 1
+        for i, game_id in enumerate(history):
+            game = await self.riot.get_match_info_by_id(game_id)
+
+            if i == 0:
+                last_played = game.start_time
+
+            if game.winner == 'Remake':
+                continue
+            if self.did_user_win(user.id, game):
+                break
+            lose_streak += 1
 
         self.player_memory[user.puuid] = {
-            'last_game': game_id,
-            'last_played': match.start_time,
+            'last_game': history[0],
+            'last_played': last_played,
             'lose_streak': lose_streak,
             'rank_solo': user.rank_solo,
             'rank_flex': user.rank_flex
         }
 
-    async def set_memory_to_game(self, puuid: str, game_id: Union[str, None] = None, offset: int = 0) -> bool:
+    async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:
         response = await self.riot.get_profile_info(puuid)
         if response.error():
             return False
@@ -185,18 +190,8 @@ class EventManager():
         if matches_res.error():
             log('Error: ' + matches_res.error(), 'ERROR', source='main.events')
             return False
-        game_ids = matches_res.data
-        if game_id is not None and game_id not in game_ids:
-            return False
 
-        if game_id is None:
-            game_id = game_ids[offset]
-            index = 1 + offset
-        else:
-            index = game_ids.index(game_id)
-        print(game_id)
-
-        await self.remember_game(user, game_id, game_ids[index:])
+        await self.remember_history(user, matches_res.data[offset:])
         return True
 
 
@@ -209,11 +204,11 @@ if __name__ == '__main__':
     events = EventManager(riot_client)
 
     user = asyncio.run(
-        riot_client.get_riot_account_puuid('D0M0V0N', 'cbt'))
+        riot_client.get_riot_account_puuid('im not from here', '9969'))
     if user.error():
         print('Error:', user.error())
         exit(1)
     puuid = user.data['puuid']
     print(puuid)
-    asyncio.run(events.set_memory_to_game(puuid, offset=2))
-    print(asyncio.run(events.check([puuid])))
+    asyncio.run(events.set_memory_to_game(puuid, offset=1))
+    print([(e.kind, e.streak) for e in asyncio.run(events.check([puuid]))])
