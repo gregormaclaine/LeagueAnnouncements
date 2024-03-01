@@ -10,7 +10,7 @@ Then use the `/track` command to start tracking your League summoner profiles. F
 
 If you want to be pinged when it makes an announcement related to you, use the `/claim_profile` command to link your discord name to the profile. To find the index of the profile, you can call the `/list` command.
 
-## List of Commands:
+## List of Commands
 
 ```
 /profile {player} {tag} - See your rank, mastery and favourite champs
@@ -26,7 +26,7 @@ If you want to be pinged when it makes an announcement related to you, use the `
 
 ```
 
-### Dev Commands:
+### Dev Commands
 
 ```
 /track_many {users} - Bulk track multiple users (player#tag,player2#tag2...)
@@ -37,7 +37,7 @@ If you want to be pinged when it makes an announcement related to you, use the `
 /autochecker start - Restarts the checker if it has shutdown due to an error
 ```
 
-## Running The Bot:
+## Running The Bot
 
 Your can run this bot using Docker
 
