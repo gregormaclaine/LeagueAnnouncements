@@ -95,7 +95,9 @@ def tracked_list(users: List[TrackPlayer], offset: int):
 
     for i, u in enumerate(users[offset * 15:(offset + 1) * 15]):
         index = offset * 15 + i + 1
-        user_line = f"{index}. {u['name']}#{u['tag']} (Lvl {u['level']})"
+        links = '🔗' * len(u['claimed_users'])
+        user_line = f"{index}. {u['name']}#{
+            u['tag']} (Lvl {u['level']})  {links}"
         embed.add_field(name=user_line, value="", inline=False)
 
     return embed

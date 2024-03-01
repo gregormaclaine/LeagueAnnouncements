@@ -348,6 +348,34 @@ def main():
         else:
             await interaction.response.send_message(f"You have not claimed {tracked[index]['name']}#{tracked[index]['tag']}")
 
+    @bot.tree.command(name="who_claims", description="See all users who claim a profile")
+    async def who_claims(interaction: discord.Interaction, index: int):
+        log_command(interaction)
+        if index < 1:
+            await interaction.response.send_message(f'Index must be a non-negative integer')
+            return
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        if index > len(tracked):
+            await interaction.response.send_message(f'Index is out of range')
+            return
+
+        index -= 1
+
+        profile = tracked[index]
+        msg = f"{profile['name']}#{profile['tag']} is claimed by {
+            num_of('User', len(profile['claimed_users']))}:"
+        for user_id in profile['claimed_users']:
+            user = await bot.fetch_user(user_id)
+            name = user.display_name if user else 'Unknown User'
+            msg += f'\n- {name}'
+        await interaction.response.send_message(msg)
+
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():
         for guild_id, channel_id in output_channels.items():
