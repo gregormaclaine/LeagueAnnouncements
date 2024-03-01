@@ -83,15 +83,15 @@ def main():
             matches = [p for p in tracked_players[g_id]
                        if p["puuid"] == user.puuid]
             if len(matches):
-                await interaction.response.send_message(f'Already tracking {user.summoner_name}#{tag}')
+                await interaction.response.send_message(f'Already tracking {user.summoner_name}#{tag.upper()}')
                 return
         else:
             tracked_players[g_id] = []
 
         tracked_players[g_id].append({
             'puuid': user.puuid,
-            'name': name,
-            'tag': tag,
+            'name': user.summoner_name,
+            'tag': tag.upper(),
             'level': user.level,
             'claimed_users': set()
         })
@@ -133,8 +133,8 @@ def main():
 
             tracked_players[g_id].append({
                 'puuid': user.puuid,
-                'name': name,
-                'tag': tag,
+                'name': user.summoner_name,
+                'tag': tag.upper(),
                 'level': user.level,
                 'claimed_users': set()
             })
