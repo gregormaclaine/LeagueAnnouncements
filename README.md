@@ -2,7 +2,15 @@
 
 A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement, such as losing 3 or more games in a row or getting a KDA < 1.
 
-## List of commands:
+## Usage
+
+After adding the bot to your server, first run `/set_channel` and choose where you want the announcements to be sent to. You can find the channel ID by right-clicking on a channel when you have Discord developer settings switched on.
+
+Then use the `/track` command to start tracking your League summoner profiles. From now, when you make an achievement, the bot will send a message to your chosen channel.
+
+If you want to be pinged when it makes an announcement related to you, use the `/claim_profile` command to link your discord name to the profile. To find the index of the profile, you can call the `/list` command.
+
+## List of Commands:
 
 ```
 /profile {player} {tag} - See your rank, mastery and favourite champs
@@ -18,7 +26,7 @@ A Discord bot that allows you to track your own League of Legends accounts and a
 
 ```
 
-### Dev commands:
+### Dev Commands:
 
 ```
 /track_many {users} - Bulk track multiple users (player#tag,player2#tag2...)
@@ -29,7 +37,7 @@ A Discord bot that allows you to track your own League of Legends accounts and a
 /autochecker start - Restarts the checker if it has shutdown due to an error
 ```
 
-## Running the bot:
+## Running The Bot:
 
 Your can run this bot using Docker
 
@@ -45,3 +53,7 @@ python ./src/main.py
 ```
 
 `.env` file should be located in the root directory. Alternatively, you can use shell environment variables.
+
+### Hosting
+
+I recommend using [Railway.app](https://railway.app/) to host the bot, as the bot uses very little resources so easily fits into their generous trial tier. The configuration for persistent storage is already set up to be used with Railway Volume storage, but does also work for other generic hosting platforms.
