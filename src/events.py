@@ -126,6 +126,9 @@ class EventManager():
                     champ=info['champ']
                 ))
 
+            if game.winner == 'Remake':
+                continue
+
             if not info['win']:
                 memory['lose_streak'] += 1
                 if memory['lose_streak'] >= 3:
