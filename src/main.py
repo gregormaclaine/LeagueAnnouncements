@@ -372,7 +372,7 @@ def main():
 
         profile = tracked[index]
         msg = f"{profile['name']}#{profile['tag']} is claimed by {
-            num_of('User', len(profile['claimed_users']))}:"
+            num_of('user', len(profile['claimed_users']))}{':' if len(profile['claimed_users']) else ''}"
         for user_id in profile['claimed_users']:
             user = await bot.fetch_user(user_id)
             name = user.display_name if user else 'Unknown User'
