@@ -16,11 +16,11 @@ level_colors = {
 }
 
 
-def log(message, level="INFO"):
+def log(message, level="INFO", source='main'):
     timestamp_str = style(
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"), Color.BLACK, True)
     level_s = style(r_pad(level), level_colors.get(level, Color.GREEN), True)
-    log_origin = style('main', Color.MAGENTA)
+    log_origin = style(source, Color.MAGENTA)
     print(f"{timestamp_str} {level_s} {log_origin} {message}")
 
 

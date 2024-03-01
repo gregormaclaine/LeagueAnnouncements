@@ -55,12 +55,12 @@ class EventManager():
 
     async def check(self, puuids: List[str], quiet=False):
         if not quiet:
-            log('Running event checks...')
+            log('Running event checks...', source='main.events')
         tasks = [self.check_user(puuid) for puuid in puuids]
         events = flat(await asyncio.gather(*tasks))
         if not quiet:
             log(f'Completed event checks ({
-                num_of('new announcement', len(events))})')
+                num_of('new announcement', len(events))})', source='main.events')
         return events
 
     async def check_user(self, puuid: str) -> List[GameEvent]:
@@ -73,7 +73,8 @@ class EventManager():
         memory = self.player_memory.get(puuid)
 
         if memory is None or memory['last_game'] not in game_ids:
-            log(f'Resetting player memory for [{user.summoner_name}]')
+            log(f'Resetting player memory for [{
+                user.summoner_name}]', source='main.events')
             await self.remember_game(user, game_ids[0], game_ids[1:])
             return []
 
@@ -84,7 +85,7 @@ class EventManager():
 
         if new_games:
             log(f'Scanning {num_of('new game', len(new_games))
-                            } from [{user.summoner_name}]')
+                            } from [{user.summoner_name}]', source='main.events')
 
         events = self.find_events_from_games(user, new_games, memory)
 
@@ -182,7 +183,7 @@ class EventManager():
 
         matches_res = await self.riot.get_matches_ids_by_puuid(puuid, 20)
         if matches_res.error():
-            log('Error: ' + matches_res.error(), 'ERROR')
+            log('Error: ' + matches_res.error(), 'ERROR', source='main.events')
             return False
         game_ids = matches_res.data
         if game_id is not None and game_id not in game_ids:

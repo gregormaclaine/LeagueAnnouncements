@@ -1,7 +1,5 @@
 import discord
 from discord.ext import commands as discord_commands, tasks
-from dotenv import load_dotenv
-import os
 import embed_generator
 from riot.api import RiotAPI
 from logs import log, log_command
@@ -9,30 +7,20 @@ from events import EventManager, GameEvent
 from game_info import TrackPlayer
 from typing import List, Literal
 from utils import num_of, flat
-
-load_dotenv()
-
-RIOT_TOKEN = os.getenv("RIOT_TOKEN")
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-
-if RIOT_TOKEN is None or DISCORD_TOKEN is None:
-    print("Error: Invalid enviroment variables:")
-    print('Error:  - a necessary token is missing')
-    exit(1)
+from config import get_config
+from storage import Storage
 
 
 def main():
+    CONFIG = get_config()
     intents = discord.Intents.default()
 
-    tracked_players: dict[int, List[TrackPlayer]] = {}
-    output_channels: dict[int, int] = {}
+    storage = Storage(CONFIG.FILES_PATH)
 
-    # Riot API constants
-    server = os.getenv("SERVER", "euw1")
-    region = os.getenv("REGION", "europe")
+    tracked_players, output_channels = storage.read()
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
-    riot_client = RiotAPI(RIOT_TOKEN, server, region)
+    riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER, CONFIG.REGION)
     events = EventManager(riot_client)
 
     def get_mentions_from_events(events: List[GameEvent], guild_id: int) -> str:
@@ -67,6 +55,10 @@ def main():
             status=discord.Status.online, activity=discord.Game(
                 "League of Legends")
         )
+
+        for tracked in tracked_players.values():
+            await events.check([p['puuid'] for p in tracked], quiet=True)
+
         log('Starting automatic announcement checker')
         if not automatic_announcement_check.is_running():
             await automatic_announcement_check.start()
@@ -101,6 +93,7 @@ def main():
             embed=embed_generator.mini_user(user)
         )
         await events.check([user.puuid], quiet=True)
+        storage.write(tracked_players, output_channels)
 
     @bot.tree.command(name="track_many", description="Tracks multiple players at once (For dev use)")
     async def track_many(interaction: discord.Interaction, names: str):
@@ -148,6 +141,7 @@ def main():
             await interaction.response.send_message(message)
 
         await events.check(added_puuids, quiet=True)
+        storage.write(tracked_players, output_channels)
 
     @bot.tree.command(name="untrack", description="Stops tracking a player")
     async def untrack(interaction: discord.Interaction, index: int):
@@ -174,6 +168,7 @@ def main():
 
         player_name = f"{deleted_player['name']}#{deleted_player['tag']}"
         await interaction.response.send_message(f"Stopped tracking {player_name}")
+        storage.write(tracked_players, output_channels)
 
     @bot.tree.command(name="list", description="Lists all tracked players")
     async def list(interaction: discord.Interaction, offset: int = 0):
@@ -251,6 +246,7 @@ def main():
 
         if not silent:
             await channel.send('I will now send announcements here')
+        storage.write(tracked_players, output_channels)
 
     @bot.tree.command(name="autochecker", description="Inspect and modify the automatic checker")
     async def autochecker(interaction: discord.Interaction, command: Literal['status', 'pause', 'unpause', 'start']):
@@ -323,6 +319,7 @@ def main():
 
         tracked[index]['claimed_users'].add(interaction.user.id)
         await interaction.response.send_message(f"You have claimed {tracked[index]['name']}#{tracked[index]['tag']}")
+        storage.write(tracked_players, output_channels)
 
     @bot.tree.command(name="unclaim_profile", description="Unclaim a profile to stop being pinged (Weak)")
     async def unclaim_profile(interaction: discord.Interaction, index: int):
@@ -347,6 +344,7 @@ def main():
         if interaction.user.id in claimed:
             claimed.remove(interaction.user.id)
             await interaction.response.send_message(f"You have unclaimed {tracked[index]['name']}#{tracked[index]['tag']}")
+            storage.write(tracked_players, output_channels)
         else:
             await interaction.response.send_message(f"You have not claimed {tracked[index]['name']}#{tracked[index]['tag']}")
 
@@ -370,7 +368,7 @@ def main():
             mentions = get_mentions_from_events(announcments, guild_id)
             await bot.get_channel(channel_id).send(mentions, embeds=embeds)
 
-    bot.run(DISCORD_TOKEN)
+    bot.run(CONFIG.DISCORD_TOKEN)
 
 
 if __name__ == "__main__":
