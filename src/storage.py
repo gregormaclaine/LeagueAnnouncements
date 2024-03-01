@@ -1,4 +1,5 @@
 import json
+import traceback
 from game_info import TrackPlayer
 from typing import List
 from os import path
@@ -33,10 +34,10 @@ class Storage:
                     log('Successfully loaded persistent memory',
                         source='main.storage')
                     return data
-                except Exception as e:
+                except Exception:
                     log('Error: Failed to extract data from memory',
                         'ERROR', 'main.storage')
-                    log(e, 'ERROR', 'main.storage')
+                    log(traceback.format_exc(), 'ERROR', 'main.storage')
                     return ({}, {})
         except FileNotFoundError:
             return ({}, {})

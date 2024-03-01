@@ -1,3 +1,4 @@
+import traceback
 import discord
 from discord.ext import commands as discord_commands, tasks
 import embed_generator
@@ -355,9 +356,9 @@ def main():
 
             try:
                 announcments = await events.check([p['puuid'] for p in tracked_players[guild_id]])
-            except Exception as e:
+            except Exception:
                 log(f'Couldn\'t check announcements for [{guild_id}]', 'ERROR')
-                log(e, 'ERROR')
+                log(traceback.format_exc(), 'ERROR')
                 continue
 
             if len(announcments) == 0:
