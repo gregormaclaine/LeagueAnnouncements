@@ -46,7 +46,7 @@ class RiotAPI:
         r1, t1 = rank1.split(' ')
         r2, t2 = rank2.split(' ')
 
-        wdiff = cls.queueWeight.get(r1, 0) - cls.queueWeight(r2, 0)
+        wdiff = cls.queueWeight.get(r1, 0) - cls.queueWeight.get(r2, 0)
         if wdiff > 0:
             return False
         elif wdiff < 0:
