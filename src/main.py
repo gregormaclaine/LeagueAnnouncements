@@ -6,12 +6,13 @@ from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager, GameEvent
 from typing import List, Literal
-from utils import num_of, flat
+from utils import num_of, flat, print_header
 from config import get_config
 from storage import Storage
 
 
 def main():
+    print_header()
     CONFIG = get_config()
     intents = discord.Intents.default()
 
