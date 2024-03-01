@@ -59,7 +59,7 @@ def random_celebration():
     ]).replace('<sup>', random_superlative().capitalize())
 
 
-header = r"""
+banner_art = r"""
    __                                 ___       _   
   / /  ___  __ _  __ _ _   _  ___    / __\ ___ | |_ 
  / /  / _ \/ _` |/ _` | | | |/ _ \  /__\/// _ \| __|
@@ -70,4 +70,4 @@ header = r"""
 
 
 def print_header():
-    print(header[1:])
+    print('| ' + banner_art[1:].replace('\n', '\n| '))
