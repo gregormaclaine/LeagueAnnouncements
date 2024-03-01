@@ -20,6 +20,7 @@ If you want to be pinged when it makes an announcement related to you, use the `
 
 /claim_profile {index} - Links discord account to tracked player (Pings you when announcements involve you)
 /unclaim_profile {index} - Unlinks discord account from tracked player
+/who_claims {index} - Get list of users who have claimed an account
 
 /set_channel {channel} {silent=false} - Set channel to which the announcements will be sent
 /run_checks - Manually check for new announcements (This is done automatically every 5 minutes)
