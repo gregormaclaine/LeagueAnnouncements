@@ -19,22 +19,27 @@ class Storage:
         self.path = files_path
 
     def read(self) -> tuple[dict[int, List[TrackPlayer]], dict[int, int]]:
-        with open(path.join(self.path, self.FILENAME), 'r') as f:
-            try:
-                memory = json.load(f)
-            except json.decoder.JSONDecodeError:
-                log('Failed to decode persistent memory', source='main.storage')
-                return ({}, {})
+        try:
+            with open(path.join(self.path, self.FILENAME), 'r') as f:
+                try:
+                    memory = json.load(f)
+                except json.decoder.JSONDecodeError:
+                    log('Failed to decode persistent memory',
+                        source='main.storage')
+                    return ({}, {})
 
-            try:
-                data = self.extract_from_data(memory)
-                log('Successfully loaded persistent memory', source='main.storage')
-                return data
-            except Exception as e:
-                log('Error: Failed to extract data from memory',
-                    'ERROR', 'main.storage')
-                log(e, 'ERROR', 'main.storage')
-                return ({}, {})
+                try:
+                    data = self.extract_from_data(memory)
+                    log('Successfully loaded persistent memory',
+                        source='main.storage')
+                    return data
+                except Exception as e:
+                    log('Error: Failed to extract data from memory',
+                        'ERROR', 'main.storage')
+                    log(e, 'ERROR', 'main.storage')
+                    return ({}, {})
+        except FileNotFoundError:
+            return ({}, {})
 
     def extract_from_data(self, memory: any) -> tuple[dict[int, List[TrackPlayer]], dict[int, int]]:
         tracked_players = memory['tracked_players']

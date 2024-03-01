@@ -4,7 +4,6 @@ import embed_generator
 from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager, GameEvent
-from game_info import TrackPlayer
 from typing import List, Literal
 from utils import num_of, flat
 from config import get_config
