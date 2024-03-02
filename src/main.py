@@ -389,6 +389,14 @@ def main():
     #     await bot.tree.sync(guild=discord.Object(interaction.guild_id))
     #     await interaction.followup.send('Commands Synced')
 
+    def update_remembered_levels():
+        for puuid, memory in events.player_memory.items():
+            for tracked in tracked_players.values():
+                for player in tracked:
+                    if player['puuid'] == puuid:
+                        player['level'] = memory['level']
+        storage.write(tracked_players, output_channels)
+
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():
         for guild_id, channel_id in output_channels.items():
@@ -408,6 +416,8 @@ def main():
             embeds = [embed_generator.announcement(e) for e in announcments]
             mentions = get_mentions_from_events(announcments, guild_id)
             await bot.get_channel(channel_id).send(mentions, embeds=embeds)
+
+            update_remembered_levels()
 
     bot.run(CONFIG.DISCORD_TOKEN)
 

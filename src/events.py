@@ -40,6 +40,7 @@ class Memory(TypedDict):
     lose_streak: int
     rank_solo: RankOption
     rank_flex: RankOption
+    level: int
 
 
 class EventManager():
@@ -182,7 +183,8 @@ class EventManager():
             'last_played': last_played,
             'lose_streak': lose_streak,
             'rank_solo': user.rank_solo,
-            'rank_flex': user.rank_flex
+            'rank_flex': user.rank_flex,
+            'level': user.level
         }
 
     async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:
