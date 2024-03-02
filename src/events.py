@@ -1,4 +1,4 @@
-from typing import List, Literal, Union, TypedDict, Optional
+from typing import List, Literal, TypedDict, Optional
 import asyncio
 from riot.api import RiotAPI
 from dataclasses import dataclass
@@ -66,6 +66,8 @@ class EventManager():
     async def check_user(self, puuid: str) -> List[GameEvent]:
         response = await self.riot.get_profile_info(puuid)
         if response.error():
+            response.log_error(
+                2, 'Couldn\'t get profile from puuid', 'main.events')
             return []
         user: UserInfo = response.data
 
@@ -186,12 +188,15 @@ class EventManager():
     async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:
         response = await self.riot.get_profile_info(puuid)
         if response.error():
+            response.log_error(
+                3, 'Couldn\'t get profile from puuid', 'main.events')
             return False
         user: UserInfo = response.data
 
         matches_res = await self.riot.get_matches_ids_by_puuid(puuid, 20)
         if matches_res.error():
-            log('Error: ' + matches_res.error(), 'ERROR', source='main.events')
+            response.log_error(
+                4, 'Couldn\'t get game ids for puuid', 'main.events')
             return False
 
         await self.remember_history(user, matches_res.data[offset:])
@@ -209,7 +214,7 @@ if __name__ == '__main__':
     user = asyncio.run(
         riot_client.get_riot_account_puuid('im not from here', '9969'))
     if user.error():
-        print('Error:', user.error())
+        user.log_error(0)
         exit(1)
     puuid = user.data['puuid']
     print(puuid)

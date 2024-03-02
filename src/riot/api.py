@@ -111,16 +111,18 @@ class RiotAPI:
     async def get_recent_matches_ids(self, puuid: str, count: int = 20) -> tuple[List[str], APISummoner]:
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner.error() is not None:
+            summoner.log_error(5, "Couldn't get summoner from puuid")
             return summoner
         matches = await self.get_matches_ids_by_puuid(summoner.data['puuid'], count=count)
         if matches.error() is not None:
+            summoner.log_error(6, "Couldn't get game ids for puuid")
             return matches
         return (matches.data, summoner.data)
 
     async def get_match_info_by_id(self, match_id: str):
         data_res = await self.get_raw_match_info_by_id(match_id)
         if data_res.error() is not None:
-            log('Error: Couldn\'t get match info:' + data_res.error())
+            data_res.log_error(7, 'Couldn\'t get match info')
             return None
 
         raw_data = data_res.data
@@ -184,6 +186,7 @@ class RiotAPI:
     async def get_profile_info(self, puuid: str) -> APIResponse[UserInfo]:
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner.error() is not None:
+            summoner.log_error(8, 'Couldn\'t get summoner from puuid')
             return summoner
 
         user = UserInfo(
