@@ -28,7 +28,7 @@ class GameEvent:
     def rank_dir(self):
         if self.old_rank is None or self.new_rank is None:
             return None
-        if (RiotAPI.is_rank_growth(self.old_rank, self.new_rank)):
+        if RiotAPI.is_rank_growth(self.old_rank, self.new_rank):
             return 'climbed'
         else:
             return 'fallen'

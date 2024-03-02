@@ -53,7 +53,7 @@ class RiotAPI:
             return True
 
         tiers = ['I', 'II', 'III', 'IV']
-        return tiers.index(t1.upper()) < tiers.index(t2.upper())
+        return tiers.index(t1.upper()) > tiers.index(t2.upper())
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
