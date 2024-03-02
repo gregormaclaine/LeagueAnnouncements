@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 
 def flat(matrix):
@@ -23,6 +24,28 @@ def repair_champ_name(champ_name):
         else:
             new_champ_name += i
     return new_champ_name
+
+
+def cache_with_timeout(seconds: int = 120):
+    def decorator(func):
+        cache: dict[tuple, tuple[datetime, any]] = {}
+
+        async def wrapper(*args, **kwargs):
+            cached = cache.get(args)
+            if cached:
+                # print(f'Hit cache - {func.__name__}')
+                if (datetime.now() - cached[0]).seconds <= seconds:
+                    return cached[1]
+                # print(f'Cache timout - {func.__name__}')
+                del cache[args]
+
+            # print(f'Running call - {func.__name__}')
+            data = await func(*args, **kwargs)
+            cache[args] = (datetime.now(), data)
+            return data
+
+        return wrapper
+    return decorator
 
 
 def random_superlative():

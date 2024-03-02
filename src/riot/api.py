@@ -2,8 +2,8 @@ import aiohttp
 from typing import List
 from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner
-from logs import log
 from asyncio import Semaphore
+from utils import cache_with_timeout
 
 
 class RiotAPI:
@@ -68,21 +68,26 @@ class RiotAPI:
                         raise Exception(str(response))
                     return r
 
+    @cache_with_timeout(600)
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:
         url = f"/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
         return await self.api(url, universal=True)
 
+    @cache_with_timeout(270)
     async def get_summoner_by_puuid(self, puuid: str) -> APIResponse[APISummoner]:
         return await self.api(f"/lol/summoner/v4/summoners/by-puuid/{puuid}")
 
+    @cache_with_timeout()
     async def get_matches_ids_by_puuid(self, puuid: str, count: int = 20, start: int = 0) -> APIResponse[List[str]]:
         url = f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
         params = {"count": count, "start": start}
         return await self.api(url, params, universal=True)
 
+    @cache_with_timeout(300)
     async def get_raw_match_info_by_id(self, match_id: str) -> APIResponse[any]:
         return await self.api(f"/lol/match/v5/matches/{match_id}", universal=True)
 
+    @cache_with_timeout()
     async def get_ranked_info(self, user_id: str):
         data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-summoner/{user_id}")
 
@@ -100,6 +105,7 @@ class RiotAPI:
             ranks.append(rankArray)
         return ranks
 
+    @cache_with_timeout()
     async def get_mastery_info(self, puuid: str) -> List[UserChamp]:
         data = await self.api(f"/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}")
         return [
