@@ -29,9 +29,9 @@ class GameEvent:
         if self.old_rank is None or self.new_rank is None:
             return None
         if RiotAPI.is_rank_growth(self.old_rank, self.new_rank):
-            return 'climbed'
+            return 'promoted'
         else:
-            return 'fallen'
+            return 'demoted'
 
 
 class Memory(TypedDict):
