@@ -58,3 +58,7 @@ python ./src/main.py
 ### Hosting
 
 I recommend using [Railway.app](https://railway.app/) to host the bot, as the bot uses very little resources so easily fits into their generous trial tier. The configuration for persistent storage is already set up to be used with Railway Volume storage, but does also work for other generic hosting platforms.
+
+## Disclaimer
+
+This bot is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
