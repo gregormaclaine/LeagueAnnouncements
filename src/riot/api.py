@@ -3,7 +3,7 @@ from typing import List
 from asyncio import Semaphore
 from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
 from utils import cache_with_timeout
-from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner
+from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch
 
 
 class RiotAPI:
@@ -84,7 +84,7 @@ class RiotAPI:
         return await self.api(url, params, universal=True)
 
     @cache_with_timeout(300)
-    async def get_raw_match_info_by_id(self, match_id: str) -> APIResponse[any]:
+    async def get_raw_match_info_by_id(self, match_id: str) -> APIResponse[APIMatch]:
         return await self.api(f"/lol/match/v5/matches/{match_id}", universal=True)
 
     @cache_with_timeout()
@@ -113,17 +113,6 @@ class RiotAPI:
                       last_play=c["lastPlayTime"],    chest=c["chestGranted"])
             for c in data.data
         ]
-
-    async def get_recent_matches_ids(self, puuid: str, count: int = 20) -> tuple[List[str], APISummoner]:
-        summoner = await self.get_summoner_by_puuid(puuid)
-        if summoner.error() is not None:
-            summoner.log_error(5, "Couldn't get summoner from puuid")
-            return summoner
-        matches = await self.get_matches_ids_by_puuid(summoner.data['puuid'], count=count)
-        if matches.error() is not None:
-            summoner.log_error(6, "Couldn't get game ids for puuid")
-            return matches
-        return (matches.data, summoner.data)
 
     async def get_match_info_by_id(self, match_id: str):
         data_res = await self.get_raw_match_info_by_id(match_id)
@@ -173,21 +162,6 @@ class RiotAPI:
 
         return GameInfo(match_id, start_time, game_duration,
                         winner, participants, queue_type)
-
-    async def get_recent_matches_infos(self, puuid: str, count: int = 20):
-        matches_infos = []
-        data = await self.get_recent_matches_ids(puuid, count)
-        for match_id in data[0]:
-            match_info = await self.get_match_info_by_id(match_id)
-            if match_info is not None:
-                matches_infos.append(match_info)
-        return [matches_infos, data[1]]
-
-    async def get_recent_match_info(self, puuid: str, id: int = 0):
-        match_data = await self.get_recent_matches_ids(puuid, id + 1)
-        if len(match_data[0]) > id:
-            return await self.get_match_info_by_id(match_data[0][id])
-        return None
 
     async def get_profile_info(self, puuid: str) -> APIResponse[UserInfo]:
         summoner = await self.get_summoner_by_puuid(puuid)
