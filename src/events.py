@@ -1,7 +1,7 @@
-from typing import List, Literal, TypedDict, Optional
 import asyncio
-from riot.api import RiotAPI
 from dataclasses import dataclass
+from typing import List, Literal, TypedDict, Optional
+from riot.api import RiotAPI
 from game_info import UserInfo, GameInfo, RankOption
 from logs import log
 from utils import flat, num_of

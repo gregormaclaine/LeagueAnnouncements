@@ -2,9 +2,9 @@ import discord
 import requests
 import random
 from typing import List
-from game_info import UserInfo, TrackPlayer
 from datetime import datetime
 from events import GameEvent
+from game_info import UserInfo, TrackPlayer
 from utils import random_superlative, repair_champ_name, num_of, random_celebration
 
 rank_assets = {

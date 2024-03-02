@@ -1,6 +1,6 @@
 import discord
-from datetime import datetime
 from colorist import Color, Effect
+from datetime import datetime
 from utils import r_pad
 
 

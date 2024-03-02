@@ -1,8 +1,8 @@
 import json
 import traceback
-from game_info import TrackPlayer
-from typing import List
 from os import path
+from typing import List
+from game_info import TrackPlayer
 from logs import log
 
 

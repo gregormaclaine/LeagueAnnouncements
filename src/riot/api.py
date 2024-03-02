@@ -1,9 +1,9 @@
 import aiohttp
 from typing import List
-from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
-from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner
 from asyncio import Semaphore
+from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
 from utils import cache_with_timeout
+from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner
 
 
 class RiotAPI:

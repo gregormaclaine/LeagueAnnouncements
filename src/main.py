@@ -1,11 +1,11 @@
-import traceback
 import discord
 from discord.ext import commands as discord_commands, tasks
+from typing import List, Literal
+import traceback
 import embed_generator
 from riot.api import RiotAPI
 from logs import log, log_command
 from events import EventManager, GameEvent
-from typing import List, Literal
 from utils import num_of, flat, print_header
 from config import get_config
 from storage import Storage
