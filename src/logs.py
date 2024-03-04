@@ -1,5 +1,6 @@
 import discord
 from colorist import Color, Effect
+import sys
 from datetime import datetime
 from utils import r_pad
 
@@ -21,7 +22,8 @@ def log(message, level="INFO", source='main'):
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"), Color.BLACK, True)
     level_s = style(r_pad(level), level_colors.get(level, Color.GREEN), True)
     log_origin = style(source, Color.MAGENTA)
-    print(f"{timestamp_str} {level_s} {log_origin} {message}")
+    out = sys.stdout if level != 'ERROR' else sys.stderr
+    print(f"{timestamp_str} {level_s} {log_origin} {message}", file=out)
 
 
 def log_command(i: discord.Interaction):

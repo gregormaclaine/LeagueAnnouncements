@@ -112,13 +112,15 @@ def main():
         for summoner in names:
             try:
                 name, tag = summoner.split('#')
+                if name == '' or tag == '':
+                    raise ValueError(f'Name: [{name}], Tag: [{tag}]')
             except ValueError:
                 await interaction.response.send_message('Error: Invalid request')
                 return
 
             user = await get_user_from_name(interaction, name, tag)
             if user is None:
-                continue
+                return
 
             matches = [p for p in tracked_players[g_id]
                        if p["puuid"] == user.puuid]
