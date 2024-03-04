@@ -1,13 +1,13 @@
 import aiohttp
 from typing import List
 from asyncio import Semaphore
-from game_info import GameInfo, PlayerInfo, UserInfo, UserChamp
+from game_info import GameInfo, PlayerInfo, RankOption, QueueType, UserInfo, UserChamp
 from utils import cache_with_timeout
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch
 
 
 class RiotAPI:
-    queueTypes = {
+    queueTypes: dict[int, QueueType] = {
         400: "Draft",
         420: "Solo/Duo",
         430: "Blind",
@@ -15,7 +15,7 @@ class RiotAPI:
         450: "ARAM",
         700: "Clash",
     }
-    queueWeight = {
+    queueWeight: dict[RankOption, int] = {
         "UNRANKED": -1,
         "IRON": 0,
         "BRONZE": 1,

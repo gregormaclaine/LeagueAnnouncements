@@ -88,6 +88,8 @@ class EventManager():
         new_games = await asyncio.gather(*[self.riot.get_match_info_by_id(gid)
                                            for gid in new_game_ids])
 
+        new_games = [g for g in new_games if g is not None]
+
         if new_games:
             log(f'Scanning {num_of('new game', len(new_games))
                             } from [{user.summoner_name}]', source='main.events')
@@ -118,30 +120,35 @@ class EventManager():
 
         return events
 
-    def find_events_from_games(self, user: UserInfo, games: List[GameInfo], memory: int):
+    def find_events_from_games(self, user: UserInfo, games: List[GameInfo], memory: Memory):
         events = []
         for game in reversed(games):
-            info = self.extract_user_match_info(user.id, game)
-            if info['kda'] != 'Perfect' and float(info['kda']) < self.BAD_KDA:
+            participant = self.match_participant(user.id, game)
+            if participant is None:
+                log(f"Couldn't find participant matching user id [{user.id}] for [{
+                    user.summoner_name}] in game [{game.id}]", 'ERROR', 'main.events')
+                continue
+
+            if participant.kda() != 'Perfect' and float(participant.kda()) < self.BAD_KDA:
                 events.append(GameEvent(
                     user,
                     game,
                     kind='KDA',
-                    kda=info['kda'],
-                    champ=info['champ']
+                    kda=participant.kda(),
+                    champ=participant.champion_name
                 ))
 
             if game.winner == 'Remake':
                 continue
 
-            if not info['win']:
+            if not participant.team == game.winner:
                 memory['lose_streak'] += 1
                 if memory['lose_streak'] >= 3:
                     events.append(GameEvent(
                         user,
                         game,
                         kind='Lose Streak',
-                        champ=info['champ'],
+                        champ=participant.champion_name,
                         streak=memory['lose_streak']
                     ))
             else:
@@ -149,14 +156,9 @@ class EventManager():
 
         return events
 
-    def extract_user_match_info(self, user_id: str, game: GameInfo):
+    def match_participant(self, user_id: str, game: GameInfo):
         p = [p for p in game.participants if p.id == user_id]
-        if p:
-            return {
-                'win': p[0].team == game.winner,
-                'kda': p[0].kda(),
-                'champ': p[0].champion_name
-            }
+        return p[0] if p else None
 
     def did_user_win(self, user_id: str, game: GameInfo) -> bool:
         if game is None:
@@ -170,6 +172,10 @@ class EventManager():
 
         for i, game_id in enumerate(history):
             game = await self.riot.get_match_info_by_id(game_id)
+            if game is None:
+                log(f"Couldn't get game for id [{
+                    game_id}] in history of [{user.summoner_name}]")
+                continue
 
             if i == 0:
                 last_played = game.start_time
@@ -219,7 +225,7 @@ if __name__ == '__main__':
     from dotenv import load_dotenv
     load_dotenv()
 
-    riot_client = RiotAPI(os.getenv('RIOT_TOKEN'), 'euw1', 'europe')
+    riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe')
     events = EventManager(riot_client)
 
     user = asyncio.run(

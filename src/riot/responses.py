@@ -166,7 +166,7 @@ class APIMatchParticipant(TypedDict):
     gameEndedInSurrender: bool
     goldEarned: int
     goldSpent: int
-    individualPosition: str
+    individualPosition: Literal['UTILITY', 'BOTTOM', 'MIDDLE', 'JUNGLE', 'TOP']
     inhibitorKills: int
     inhibitorTakedowns: int
     inhibitorsLost: int
@@ -220,7 +220,7 @@ class APIMatchParticipant(TypedDict):
     summonerName: str
     teamEarlySurrendered: bool
     teamId: int
-    teamPosition: str
+    teamPosition: Literal['UTILITY', 'BOTTOM', 'MIDDLE', 'JUNGLE', 'TOP']
     timeCCingOthers: int
     timePlayed: int
     totalDamageDealt: int

@@ -1,16 +1,16 @@
 import json
 import traceback
 from os import path
-from typing import List
+from typing import Any, List
 from game_info import TrackPlayer
 from logs import log
 
 
 class SetEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return json.JSONEncoder.default(self, o)
 
 
 class Storage:
@@ -42,7 +42,7 @@ class Storage:
         except FileNotFoundError:
             return ({}, {})
 
-    def extract_from_data(self, memory: any) -> tuple[dict[int, List[TrackPlayer]], dict[int, int]]:
+    def extract_from_data(self, memory: Any) -> tuple[dict[int, List[TrackPlayer]], dict[int, int]]:
         tracked_players = memory['tracked_players']
         output_channels = memory['output_channels']
 

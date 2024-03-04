@@ -30,15 +30,18 @@ class PlayerInfo:
         return str(round((self.kills + self.assists) / self.deaths, 2))
 
 
+type QueueType = Literal['Draft', 'Solo/Duo',
+                         'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
+
+
 @dataclass
 class GameInfo:
-    id: int
+    id: str
     start_time: int
     duration: int
     winner: Literal['Red', 'Blue', 'Remake']
     participants: List[PlayerInfo]
-    queue_type: Literal['Draft', 'Solo/Duo',
-                        'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
+    queue_type: QueueType
 
     def get_player(self, id: str):
         p = [p for p in self.participants if p.id == id]

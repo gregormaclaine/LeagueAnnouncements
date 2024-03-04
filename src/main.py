@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands as discord_commands, tasks
-from typing import List, Literal
+from typing import List, Literal, cast
 import traceback
 import embed_generator
 from riot.api import RiotAPI
@@ -51,7 +51,7 @@ def main():
     @bot.event
     async def on_ready():
         await bot.tree.sync()
-        log(f"Logged in as {bot.user} (ID: {bot.user.id})")
+        log(f"Logged in as {bot.user} (ID: {bot.user.id if bot.user else ''})")
         await bot.change_presence(
             status=discord.Status.online, activity=discord.Game(
                 "League of Legends")
@@ -72,6 +72,10 @@ def main():
             return
 
         g_id = interaction.guild_id
+        if g_id is None:
+            await interaction.response.send_message(f'Could not get guild id')
+            return
+
         if g_id in tracked_players:
             matches = [p for p in tracked_players[g_id]
                        if p["puuid"] == user.puuid]
@@ -101,15 +105,19 @@ def main():
         log_command(interaction)
 
         g_id = interaction.guild_id
+        if g_id is None:
+            await interaction.response.send_message(f'Could not get guild id')
+            return
+
         if g_id not in tracked_players:
             tracked_players[g_id] = []
 
-        names = names.split(',')
-        if len(names) > 5:
+        name_list = names.split(',')
+        if len(name_list) > 5:
             await interaction.response.defer()
 
         added_puuids = []
-        for summoner in names:
+        for summoner in name_list:
             try:
                 name, tag = summoner.split('#')
                 if name == '' or tag == '':
@@ -138,7 +146,7 @@ def main():
 
         message = f'Request handled successfully: {
             num_of('player', len(added_puuids))} added'
-        if len(names) > 5:
+        if len(name_list) > 5:
             await interaction.followup.send(message)
         else:
             await interaction.response.send_message(message)
@@ -203,6 +211,7 @@ def main():
         log_command(interaction)
 
         g_id = interaction.guild_id
+
         if g_id not in tracked_players:
             await interaction.response.send_message(f'No players are being tracked')
             return
@@ -231,6 +240,9 @@ def main():
     @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
     async def set_channel(interaction: discord.Interaction, channel_id: str, silent: bool = False):
         log_command(interaction)
+        if interaction.guild_id is None:
+            await interaction.response.send_message(f'Could not get guild id')
+            return
         old_id = output_channels.get(interaction.guild_id, None)
 
         try:
@@ -240,6 +252,9 @@ def main():
             return
         if channel is None:
             await interaction.response.send_message('Channel not found')
+            return
+        if not isinstance(channel, discord.TextChannel):
+            await interaction.response.send_message(f'Channel must be a public text channel')
             return
 
         output_channels[interaction.guild_id] = int(channel_id)
@@ -417,7 +432,8 @@ def main():
 
             embeds = [embed_generator.announcement(e) for e in announcments]
             mentions = get_mentions_from_events(announcments, guild_id)
-            await bot.get_channel(channel_id).send(mentions, embeds=embeds)
+            channel = cast(discord.TextChannel, bot.get_channel(channel_id))
+            await channel.send(mentions, embeds=embeds)
 
             update_remembered_levels()
 

@@ -1,5 +1,6 @@
 import random
 from datetime import datetime
+from typing import Any
 
 
 def flat(matrix):
@@ -28,7 +29,7 @@ def repair_champ_name(champ_name):
 
 def cache_with_timeout(seconds: int = 120):
     def decorator(func):
-        cache: dict[tuple, tuple[datetime, any]] = {}
+        cache: dict[tuple, tuple[datetime, Any]] = {}
 
         async def wrapper(*args, **kwargs):
             cached = cache.get(args)
