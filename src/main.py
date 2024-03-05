@@ -1,6 +1,7 @@
+from math import ceil
 import discord
 from discord.ext import commands as discord_commands, tasks
-from typing import List, Literal, cast
+from typing import List, Literal, Optional, cast
 import traceback
 import embed_generator
 from events import BaseGameEvent
@@ -228,8 +229,41 @@ def main():
             return
 
         embeds = [e.embed() for e in announcments]
-        mentions = get_mentions_from_events(announcments, g_id)
-        await interaction.followup.send(mentions, embeds=embeds)
+        mentions = get_mentions_from_events(announcments[:10], g_id)
+        if len(embeds) > 10:
+            mentions += f' (And {num_of('other announcement',
+                                        len(embeds) - 10)}...)'
+        await interaction.followup.send(mentions, embeds=embeds[:10])
+
+    @bot.tree.command(name="rollback_memory", description="Resets tracking to before a certain number of games for a user")
+    async def rollback_memory(interaction: discord.Interaction, username: Optional[str] = None, games: int = 1):
+        log_command(interaction)
+        if interaction.user.id != CONFIG.OWNER_DISCORD_ID:
+            await interaction.response.send_message('You do not have the permissions to use this command')
+            return
+
+        if games < 1:
+            await interaction.response.send_message('Cannot rollback memory into future')
+            return
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        await interaction.response.defer()
+
+        puuids = [(f"{u['name']}#{u['tag']}", u['puuid'])
+                  for u in tracked if username is None or u['name'].lower() == username.lower()]
+
+        result = f'Result (Matched {num_of("User", len(puuids))}){
+            ":" if puuids else ""}'
+        for name, puuid in puuids:
+            success = await events.set_memory_to_game(puuid, offset=games)
+            result += f'\n- {name}: {"Success" if success else 'Failed'}'
+
+        await interaction.followup.send(result)
 
     @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
     async def set_channel(interaction: discord.Interaction, channel_id: str, silent: bool = False):
@@ -439,9 +473,11 @@ def main():
                 continue
 
             embeds = [e.embed() for e in announcments]
-            mentions = get_mentions_from_events(announcments, guild_id)
             channel = cast(discord.TextChannel, bot.get_channel(channel_id))
-            await channel.send(mentions, embeds=embeds)
+            for i in range(0, ceil(len(embeds) / 10), 10):
+                mentions = get_mentions_from_events(
+                    announcments[i:i + 10], guild_id)
+                await channel.send(mentions, embeds=embeds[i:i + 10])
 
             update_remembered_levels()
 

@@ -25,6 +25,8 @@ class RankChangeEvent(BaseGameEvent):
                 random_superlative()} achievement!",
             inline=False)
 
+        return embed
+
     def rank_dir(self):
         if RiotAPI.is_rank_growth(self.old_rank, self.new_rank):
             return 'promoted'

@@ -20,3 +20,5 @@ class LoseStreakEvent(BaseGameEvent):
             value=f"Make sure to congratulate them for this {
                 random_superlative()} achievement!",
             inline=False)
+
+        return embed

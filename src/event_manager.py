@@ -55,7 +55,12 @@ class EventManager():
             return []
         user: UserInfo = response.data
 
-        game_ids = (await self.riot.get_matches_ids_by_puuid(puuid, self.HISTORY_COUNT)).data
+        game_ids_res = await self.riot.get_matches_ids_by_puuid(puuid, self.HISTORY_COUNT)
+        if game_ids_res.data is None:
+            game_ids_res.log_error(
+                9, "Couldn't get game ids for puuid", 'main.events')
+            return []
+        game_ids = game_ids_res.data
         memory = self.player_memory.get(puuid)
 
         if memory is None or memory['last_game'] not in game_ids:
