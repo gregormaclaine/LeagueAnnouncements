@@ -187,6 +187,7 @@ def main():
 
         if offset < 0:
             log(tracked_players)
+            print(events.get_ordered_solo_rankings())
             await interaction.response.send_message('Offset can\'t be negative')
             return
 
@@ -396,6 +397,20 @@ def main():
             name = user.display_name if user else 'Unknown User'
             msg += f'\n- {name}'
         await interaction.response.send_message(msg)
+
+    @bot.tree.command(name="leaderboard", description="Get the ranked leaderboard of all tracked users")
+    async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo'):
+        log_command(interaction)
+        ranked_players = events.get_ordered_solo_rankings()
+
+        g_id = interaction.guild_id
+        if g_id not in tracked_players:
+            await interaction.response.send_message(f'No players are being tracked')
+            return
+        tracked = tracked_players[g_id]
+
+        embed = embed_generator.leaderboard(mode, ranked_players, tracked)
+        await interaction.response.send_message(embed=embed)
 
     # @bot.tree.command(name="sync", description="Refresh bot commands")
     # async def sync(interaction: discord.Interaction):

@@ -1,11 +1,13 @@
+import enum
 import discord
 import requests
 import random
-from typing import List
+from typing import List, Literal
 from datetime import datetime
-from events import GameEvent
+from events import GameEvent, OrderedUserRank
 from game_info import UserInfo, TrackPlayer
-from utils import random_superlative, repair_champ_name, num_of, random_celebration
+from utils import r_pad, random_superlative, repair_champ_name, num_of, random_celebration
+from logs import log
 
 rank_assets = {
     "UNRANKED": "https://cdn.discordapp.com/attachments/989905618494181386/989936020013334628/unranked.png",
@@ -144,5 +146,33 @@ def announcement(e: GameEvent):
     time = datetime.fromtimestamp(e.game.start_time / 1000)\
         .strftime("%a, %d %b %Y %I:%M%p")
     embed.set_footer(text=f'Game played at {time}')
+
+    return embed
+
+
+def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedUserRank], tracked_players: List[TrackPlayer]):
+    embed = discord.Embed(
+        title=f"Leaderboard - {mode}",
+        description=f"",
+        color=random.randint(0, 16777215),
+    )
+
+    max_len = max(map(len, (p["name"] for p in tracked_players)))
+
+    for i, p in enumerate(ranked_players):
+        matches = [tp for tp in tracked_players if tp["puuid"] == p["puuid"]]
+        if len(matches) == 0:
+            log(
+                f"Couldn't find event-memorised player in tracked_players (puuid={p['puuid']})", 'ERROR', 'main.embeds')
+            continue
+        tp = matches[0]
+
+        line = r_pad(f'{i + 1}. {tp['name']}#{tp['tag']}', max_len + 10)
+        line += f"({p['rank']} {p['tier']}: LP = {p['lp']})"
+
+        if i < 3:
+            line = f'**{line}**'
+
+        embed.add_field(name=line, value='', inline=False)
 
     return embed

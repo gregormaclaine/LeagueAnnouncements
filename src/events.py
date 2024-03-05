@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import List, Literal, TypedDict, Optional
+from typing import List, Literal, Type, TypedDict, Optional
 from riot.api import RiotAPI
 from game_info import UserInfo, GameInfo, RankOption
 from logs import log
@@ -43,6 +43,13 @@ class Memory(TypedDict):
     lp_solo: int
     lp_flex: int
     level: int
+
+
+class OrderedUserRank(TypedDict):
+    puuid: str
+    rank: str
+    tier: str
+    lp: int
 
 
 class EventManager():
@@ -197,10 +204,19 @@ class EventManager():
             'level': user.level
         }
 
-    def get_ordered_solo_rankings(self):
-        ranked_players = [{'puuid': puuid, 'rank': m['rank_solo'].split(' ')[0], 'tier':        m['rank_solo'].split(
-            ' ')[1], 'lp': m['lp_solo']} for puuid, m in self.player_memory.items() if m['rank_solo'] != 'UNRANKED']
-        print(ranked_players)
+    def get_ordered_solo_rankings(self) -> List[OrderedUserRank]:
+        ranked_players = [{
+            'puuid': puuid,
+            'rank': m['rank_solo'].split(' ')[0],
+            'tier': m['rank_solo'].split(' ')[1],
+            'lp': m['lp_solo']
+        } for puuid, m in self.player_memory.items() if m['rank_solo'] != 'UNRANKED']
+        tiers = ['IV', 'III', 'II', 'I', '']
+        ranked_players.sort(
+            key=lambda x: RiotAPI.queueWeight[x['rank']] *
+            1000 + tiers.index(x['tier']) * 100 + x['lp'],
+            reverse=True)
+        return ranked_players
 
     async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:
         response = await self.riot.get_profile_info(puuid)
