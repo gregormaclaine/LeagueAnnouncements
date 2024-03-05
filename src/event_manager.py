@@ -1,37 +1,11 @@
 import asyncio
 from dataclasses import dataclass
-from typing import List, Literal, Type, TypedDict, Optional
+from typing import Final, List, Literal, Type, TypedDict, Optional, cast
+from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent
 from riot.api import RiotAPI
 from game_info import UserInfo, GameInfo, RankOption
 from logs import log
 from utils import flat, num_of
-
-
-@dataclass
-class GameEvent:
-    user: UserInfo
-    game: GameInfo
-    kind: Literal['KDA', 'Lose Streak', 'Rank Change']
-
-    # KDA
-    kda: str = ''
-    champ: str = ''
-
-    # Lose Streak
-    streak: int = 0
-
-    # Rank Change
-    rank_mode: Literal['Flex', 'Solo/Duo'] = 'Flex'
-    old_rank: Optional[str] = None
-    new_rank: Optional[str] = None
-
-    def rank_dir(self):
-        if self.old_rank is None or self.new_rank is None:
-            return None
-        if RiotAPI.is_rank_growth(self.old_rank, self.new_rank):
-            return 'promoted'
-        else:
-            return 'demoted'
 
 
 class Memory(TypedDict):
@@ -47,8 +21,8 @@ class Memory(TypedDict):
 
 class OrderedUserRank(TypedDict):
     puuid: str
-    rank: str
-    tier: str
+    rank: RankOption
+    tier: Literal['I', 'II', 'III', 'IV', None]
     lp: int
 
 
@@ -73,7 +47,7 @@ class EventManager():
                 num_of('new announcement', len(events))})', source='main.events')
         return events
 
-    async def check_user(self, puuid: str) -> List[GameEvent]:
+    async def check_user(self, puuid: str) -> List[BaseGameEvent]:
         response = await self.riot.get_profile_info(puuid)
         if response.error():
             response.log_error(
@@ -104,23 +78,17 @@ class EventManager():
         events = self.find_events_from_games(user, new_games, memory)
 
         if user.rank_flex != memory['rank_flex']:
-            events.append(GameEvent(
-                user,
-                new_games[0],
-                kind='Rank Change',
-                rank_mode='Flex',
+            events.append(RankChangeEvent(
+                user, new_games[0],
                 old_rank=memory['rank_flex'],
-                new_rank=user.rank_flex
+                mode='Flex'
             ))
 
         if user.rank_solo != memory['rank_solo']:
-            events.append(GameEvent(
-                user,
-                new_games[0],
-                kind='Rank Change',
-                rank_mode='Solo/Duo',
+            events.append(RankChangeEvent(
+                user, new_games[0],
                 old_rank=memory['rank_solo'],
-                new_rank=user.rank_solo
+                mode='Solo/Duo',
             ))
 
         await self.remember_history(user, game_ids)
@@ -137,13 +105,7 @@ class EventManager():
                 continue
 
             if participant.kda() != 'Perfect' and float(participant.kda()) < self.BAD_KDA:
-                events.append(GameEvent(
-                    user,
-                    game,
-                    kind='KDA',
-                    kda=participant.kda(),
-                    champ=participant.champion_name
-                ))
+                events.append(LowKDAEvent(user, game))
 
             if game.winner == 'Remake':
                 continue
@@ -151,13 +113,8 @@ class EventManager():
             if not participant.team == game.winner:
                 memory['lose_streak'] += 1
                 if memory['lose_streak'] >= 3:
-                    events.append(GameEvent(
-                        user,
-                        game,
-                        kind='Lose Streak',
-                        champ=participant.champion_name,
-                        streak=memory['lose_streak']
-                    ))
+                    events.append(LoseStreakEvent(
+                        user, game, memory['lose_streak']))
             else:
                 memory['lose_streak'] = 0
 
@@ -211,6 +168,7 @@ class EventManager():
             'tier': m['rank_solo'].split(' ')[1],
             'lp': m['lp_solo']
         } for puuid, m in self.player_memory.items() if m['rank_solo'] != 'UNRANKED']
+        ranked_players = cast(List[OrderedUserRank], ranked_players)
         tiers = ['IV', 'III', 'II', 'I', '']
         ranked_players.sort(
             key=lambda x: RiotAPI.queueWeight[x['rank']] *
@@ -252,4 +210,4 @@ if __name__ == '__main__':
     puuid = user.data['puuid']
     print(puuid)
     asyncio.run(events.set_memory_to_game(puuid, offset=1))
-    print([(e.kind, e.streak) for e in asyncio.run(events.check([puuid]))])
+    print([e for e in asyncio.run(events.check([puuid]))])

@@ -3,9 +3,10 @@ from discord.ext import commands as discord_commands, tasks
 from typing import List, Literal, cast
 import traceback
 import embed_generator
+from events import BaseGameEvent
 from riot.api import RiotAPI
 from logs import log, log_command
-from events import EventManager, GameEvent
+from event_manager import EventManager
 from utils import num_of, flat, print_header
 from config import get_config
 from storage import Storage
@@ -24,7 +25,7 @@ def main():
     riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER, CONFIG.REGION)
     events = EventManager(riot_client)
 
-    def get_mentions_from_events(events: List[GameEvent], guild_id: int) -> str:
+    def get_mentions_from_events(events: List[BaseGameEvent], guild_id: int) -> str:
         puuids = [e.user.puuid for e in events]
         tracked = tracked_players[guild_id]
         discord_ids = flat([t['claimed_users']
@@ -226,17 +227,9 @@ def main():
             await interaction.followup.send('No new announcements')
             return
 
-        embeds = [embed_generator.announcement(e) for e in announcments]
+        embeds = [e.embed() for e in announcments]
         mentions = get_mentions_from_events(announcments, g_id)
         await interaction.followup.send(mentions, embeds=embeds)
-
-    # @bot.tree.command(name="dev_set_game_mem", description="Don't touch this")
-    # async def dev_set_game_mem(interaction: discord.Interaction, puuid: str, game_id: str):
-    #     await interaction.response.defer()
-    #     log_command(interaction)
-
-    #     success = await events.set_memory_to_game(puuid, game_id)
-    #     await interaction.followup.send('Success' if success else 'Failed')
 
     @bot.tree.command(name="set_channel", description="Set the channel for announcements to appear")
     async def set_channel(interaction: discord.Interaction, channel_id: str, silent: bool = False):
@@ -445,7 +438,7 @@ def main():
             if len(announcments) == 0:
                 continue
 
-            embeds = [embed_generator.announcement(e) for e in announcments]
+            embeds = [e.embed() for e in announcments]
             mentions = get_mentions_from_events(announcments, guild_id)
             channel = cast(discord.TextChannel, bot.get_channel(channel_id))
             await channel.send(mentions, embeds=embeds)

@@ -4,6 +4,8 @@ from typing import Optional
 from dotenv import load_dotenv
 load_dotenv()
 
+LEAGUE_PATCH = "14.3.1"
+
 
 @dataclass
 class Config():

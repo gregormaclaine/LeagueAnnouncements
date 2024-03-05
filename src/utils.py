@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 from typing import Any
+from config import LEAGUE_PATCH
 
 
 def flat(matrix):
@@ -25,6 +26,10 @@ def repair_champ_name(champ_name):
         else:
             new_champ_name += i
     return new_champ_name
+
+
+def icon_url(icon_id):
+    return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 
 def cache_with_timeout(seconds: int = 120):
@@ -81,6 +86,21 @@ def random_celebration():
         '<sup> Job,',
         '<sup> Work,'
     ]).replace('<sup>', random_superlative().capitalize())
+
+
+rank_assets = {
+    "UNRANKED": "https://cdn.discordapp.com/attachments/989905618494181386/989936020013334628/unranked.png",
+    "IRON": "https://cdn.discordapp.com/attachments/989905618494181386/989905732445036614/iron.png",
+    "BRONZE": "https://cdn.discordapp.com/attachments/989905618494181386/989905730805047356/bronze.png",
+    "SILVER": "https://cdn.discordapp.com/attachments/989905618494181386/989905733128687626/silver.png",
+    "GOLD": "https://cdn.discordapp.com/attachments/989905618494181386/989905731933311027/gold.png",
+    "PLATINUM": "https://cdn.discordapp.com/attachments/989905618494181386/989905732856053851/platinum.png",
+    "DIAMOND": "https://cdn.discordapp.com/attachments/989905618494181386/989905731463577600/diamond.png",
+    "EMERALD": "https://cdn.discordapp.com/attachments/989905618494181386/1132067774584324096/emerald.png",
+    "MASTER": "https://cdn.discordapp.com/attachments/989905618494181386/989905732654739516/master.png",
+    "GRANDMASTER": "https://cdn.discordapp.com/attachments/989905618494181386/989905732176592956/grandmaster.png",
+    "CHALLENGER": "https://cdn.discordapp.com/attachments/989905618494181386/989905731186749470/challenger.png",
+}
 
 
 banner_art = r"""
