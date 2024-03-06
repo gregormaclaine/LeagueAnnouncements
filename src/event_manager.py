@@ -1,10 +1,10 @@
 import asyncio
 import dataclasses
-from typing import List, TypedDict, cast
-from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent
+from typing import List, Literal, Optional, TypedDict, cast
+from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent, LeaderboardChangeEvent
 from riot import RiotAPI, UserInfo, GameInfo, RanksDict, Rank
 from logs import log
-from utils import flat, num_of
+from utils import flat, num_of, find_all_swaps
 
 
 class Memory(TypedDict):
@@ -12,10 +12,6 @@ class Memory(TypedDict):
     last_played: int
     lose_streak: int
     ranks: RanksDict
-    # rank_solo: RankOption
-    # rank_flex: RankOption
-    # lp_solo: int
-    # lp_flex: int
     level: int
 
 
@@ -30,16 +26,22 @@ class EventManager():
 
     riot: RiotAPI
     player_memory: dict[str, Memory]
+    leaderboard_memory: dict[int, List[str]]
 
     def __init__(self, riot: RiotAPI) -> None:
         self.riot = riot
         self.player_memory = {}
 
-    async def check(self, puuids: List[str], quiet=False):
+    async def check(self, puuids: List[str], guild_id: Optional[int] = None, quiet=False):
         if not quiet:
             log('Running event checks...', source='main.events')
         tasks = [self.check_user(puuid) for puuid in puuids]
         events = flat(await asyncio.gather(*tasks))
+
+        if guild_id:
+            events.extend(await self.get_leaderboard_events(guild_id, 'Solo/Duo'))
+            events.extend(await self.get_leaderboard_events(guild_id, 'Flex'))
+
         if not quiet:
             log(f'Completed event checks ({
                 num_of('new announcement', len(events))})', source='main.events')
@@ -117,6 +119,50 @@ class EventManager():
 
         return events
 
+    async def get_leaderboard_events(self, guild_id: int, mode: Literal['Solo/Duo', 'Flex']) -> List[LeaderboardChangeEvent]:
+        ranks = self.get_ordered_rankings(mode)
+        new_order = [r['puuid'] for r in ranks]
+        if guild_id not in self.leaderboard_memory:
+            self.leaderboard_memory[guild_id] = new_order
+            return []
+
+        old_order = self.leaderboard_memory[guild_id]
+
+        union_puuids = set(old_order).union(set(new_order))
+        new_order = [p for p in new_order if p in union_puuids]
+        old_order = [p for p in old_order if p in union_puuids]
+
+        events: List[LeaderboardChangeEvent] = []
+        for pos, old, new in find_all_swaps(old_order, new_order):
+            user1 = await self.riot.get_profile_info(old)
+            user2 = await self.riot.get_profile_info(new)
+            game1 = await self.riot.get_match_info_by_id(self.player_memory[old]['last_game'])
+            game2 = await self.riot.get_match_info_by_id(self.player_memory[new]['last_game'])
+
+            if user1.error():
+                user1.log_error(
+                    10, f"Couldn't get profile for puuid [{old}]", 'main.events')
+            elif user2.error:
+                user2.log_error(
+                    11, f"Couldn't get profile for puuid [{new}]", 'main.events')
+            elif game1 is None:
+                log(f"Couldn't get first user's last match [{
+                    self.player_memory[old]['last_game']}]")
+            elif game2 is None:
+                log(f"Couldn't get second user's last match [{
+                    self.player_memory[new]['last_game']}]")
+            else:
+                events.append(LeaderboardChangeEvent(
+                    pos,
+                    user1.data,
+                    user2.data,
+                    game1 if game1.start_time > game2.start_time else game2,
+                    mode
+                ))
+
+        self.leaderboard_memory[guild_id] = [r['puuid'] for r in ranks]
+        return events
+
     def match_participant(self, user_id: str, game: GameInfo):
         p = [p for p in game.participants if p.id == user_id]
         return p[0] if p else None
@@ -158,10 +204,10 @@ class EventManager():
             'level': user.level
         }
 
-    def get_ordered_solo_rankings(self) -> List[OrderedUserRank]:
-        ranked_players = [{'puuid': puuid, 'rank': m['ranks']['Solo/Duo']}
+    def get_ordered_rankings(self, mode: Literal['Solo/Duo', 'Flex']) -> List[OrderedUserRank]:
+        ranked_players = [{'puuid': puuid, 'rank': m['ranks'][mode]}
                           for puuid, m in self.player_memory.items()
-                          if m['ranks']['Solo/Duo'].division != 'UNRANKED']
+                          if m['ranks'][mode].division != 'UNRANKED']
         ranked_players = cast(List[OrderedUserRank], ranked_players)
         ranked_players.sort(key=lambda x: x['rank'].id(), reverse=True)
         return ranked_players

@@ -1,4 +1,3 @@
-import json
 import aiohttp
 from typing import List, cast
 from asyncio import Semaphore

@@ -1,7 +1,9 @@
 import random
 from datetime import datetime
-from typing import Any
+from typing import Any, List, TypeVar
 from config import LEAGUE_PATCH
+
+T = TypeVar('T')
 
 
 def flat(matrix):
@@ -121,3 +123,26 @@ banner_art = r"""
 
 def print_header():
     print('| ' + banner_art[1:].replace('\n', '\n| '))
+
+
+def find_all_swaps(old: List[T], new: List[T]) -> List[tuple[int, T, T]]:
+    """
+    Finds the position changes between two ordered lists of items. The algorithm is not
+    perfect, but it works for cases with small numbers of swaps there is not a lot of mobility.
+
+    Returns: [(position, old, new)]
+    """
+    swaps = []
+
+    for i, y in enumerate(new):
+        if i >= old.index(y):
+            continue
+
+        subswaps = []
+        for i2, x in zip(range(i, len(old)), old[i:]):
+            if x == y:
+                break
+            subswaps.append((i2, x, y))
+        swaps.extend(reversed(subswaps))
+
+    return swaps
