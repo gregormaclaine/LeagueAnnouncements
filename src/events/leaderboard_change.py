@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal, override
 
 import discord
-from riot import GameInfo, UserInfo, Rank
+from riot import GameInfo, UserInfo
 from utils import ordinal
 from .base import BaseGameEvent
 
@@ -11,6 +11,7 @@ class LeaderboardChangeEvent(BaseGameEvent):
     mode: Literal['Solo/Duo', 'Flex']
 
     def __init__(self, position: int, old_user: UserInfo, new_user: UserInfo, last_game: GameInfo, mode: Literal['Solo/Duo', 'Flex']):
+        super().__init__(new_user, last_game)
         self.position = position
         self.old_user = old_user
         self.new_user = new_user
