@@ -1,7 +1,8 @@
 import asyncio
-from typing import List, Literal, TypedDict, cast
+import dataclasses
+from typing import List, TypedDict, cast
 from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent
-from riot import RiotAPI, UserInfo, GameInfo, RankOption
+from riot import RiotAPI, UserInfo, GameInfo, RanksDict, Rank
 from logs import log
 from utils import flat, num_of
 
@@ -10,18 +11,17 @@ class Memory(TypedDict):
     last_game: str
     last_played: int
     lose_streak: int
-    rank_solo: RankOption
-    rank_flex: RankOption
-    lp_solo: int
-    lp_flex: int
+    ranks: RanksDict
+    # rank_solo: RankOption
+    # rank_flex: RankOption
+    # lp_solo: int
+    # lp_flex: int
     level: int
 
 
 class OrderedUserRank(TypedDict):
     puuid: str
-    rank: RankOption
-    tier: Literal['I', 'II', 'III', 'IV', None]
-    lp: int
+    rank: Rank
 
 
 class EventManager():
@@ -80,19 +80,13 @@ class EventManager():
 
         events = self.find_events_from_games(user, new_games, memory)
 
-        if user.rank_flex != memory['rank_flex']:
-            events.append(RankChangeEvent(
-                user, new_games[0],
-                old_rank=memory['rank_flex'],
-                mode='Flex'
-            ))
-
-        if user.rank_solo != memory['rank_solo']:
-            events.append(RankChangeEvent(
-                user, new_games[0],
-                old_rank=memory['rank_solo'],
-                mode='Solo/Duo',
-            ))
+        for mode, rank in user.ranks.items():
+            if rank != memory['ranks'][mode]:
+                events.append(RankChangeEvent(
+                    user, new_games[0],
+                    old_rank=memory['ranks'][mode],
+                    mode=mode
+                ))
 
         await self.remember_history(user, game_ids)
 
@@ -157,26 +151,19 @@ class EventManager():
             'last_game': history[0],
             'last_played': last_played,
             'lose_streak': lose_streak,
-            'rank_solo': user.rank_solo,
-            'rank_flex': user.rank_flex,
-            'lp_solo': user.lp_solo,
-            'lp_flex': user.lp_flex,
+            'ranks': {
+                'Solo/Duo': dataclasses.replace(user.ranks['Solo/Duo']),
+                'Flex': dataclasses.replace(user.ranks['Flex'])
+            },
             'level': user.level
         }
 
     def get_ordered_solo_rankings(self) -> List[OrderedUserRank]:
-        ranked_players = [{
-            'puuid': puuid,
-            'rank': m['rank_solo'].split(' ')[0],
-            'tier': m['rank_solo'].split(' ')[1],
-            'lp': m['lp_solo']
-        } for puuid, m in self.player_memory.items() if m['rank_solo'] != 'UNRANKED']
+        ranked_players = [{'puuid': puuid, 'rank': m['ranks']['Solo/Duo']}
+                          for puuid, m in self.player_memory.items()
+                          if m['ranks']['Solo/Duo'].division != 'UNRANKED']
         ranked_players = cast(List[OrderedUserRank], ranked_players)
-        tiers = ['IV', 'III', 'II', 'I', None]
-        ranked_players.sort(
-            key=lambda x: RiotAPI.queueWeight[x['rank']] *
-            1000 + tiers.index(x['tier']) * 100 + x['lp'],
-            reverse=True)
+        ranked_players.sort(key=lambda x: x['rank'].id(), reverse=True)
         return ranked_players
 
     async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:

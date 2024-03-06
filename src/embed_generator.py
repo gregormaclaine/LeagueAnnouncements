@@ -29,10 +29,8 @@ def big_user(user: UserInfo):
                      icon_url=icon_url(user.icon))
     embed.set_thumbnail(url=rank_assets[user.max_division.upper()])
 
-    embed.add_field(
-        name=f"Solo/Duo - {user.rank_solo}", value=user.solo_info())
-
-    embed.add_field(name=f"Flex - {user.rank_flex}", value=user.flex_info())
+    for mode, rank in user.ranks.items():
+        embed.add_field(name=f"{mode} - {rank.full()}", value=rank.info())
 
     embed.add_field(
         name=f"Total Mastery: {user.total_mastery}",
@@ -102,7 +100,7 @@ def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedU
         tp = matches[0]
 
         line = r_pad(f'{i + 1}. {tp['name']}#{tp['tag']}', max_len + 10)
-        line += f"({p['rank']} {p['tier']}: LP = {p['lp']})"
+        line += f"({p['rank'].full()}: LP = {p['rank'].lp})"
 
         if i < 3:
             line = f'**{line}**'

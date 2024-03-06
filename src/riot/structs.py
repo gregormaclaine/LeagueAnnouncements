@@ -1,6 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import List, Literal
+from typing import List, Literal, Optional, Self, cast
+from riot.responses import APILeagueEntry
 from utils import r_pad
 
 
@@ -10,6 +11,10 @@ type QueueType = Literal['Draft', 'Solo/Duo',
 
 type RankOption = Literal['UNRANKED', 'IRON', 'BRONZE', 'SILVER', 'GOLD',
                           'PLATINUM', 'EMERALD', 'DIAMOND', 'MASTER', 'GRANDMASTER', 'CHALLENGER']
+
+type TierOption = Literal['I', 'II', 'III', 'IV']
+
+type RanksDict = dict[Literal['Solo/Duo', 'Flex'], Rank]
 
 
 @dataclass
@@ -85,6 +90,69 @@ class UserChamp:
     chest: bool
 
 
+RANK_DIVISIONS: List[RankOption] = ['UNRANKED', 'IRON', 'BRONZE', 'SILVER',
+                                    'GOLD', 'PLATINUM', 'EMERALD', 'DIAMOND',
+                                    'MASTER', 'GRANDMASTER', 'CHALLENGER',]
+
+RANK_TIERS: List[Optional[TierOption]] = [
+    'I', 'II', 'III', 'IV', None]
+
+
+@dataclass
+class Rank:
+    division: RankOption
+    tier: Optional[TierOption]
+    lp: int
+    wins: int
+    losses: int
+
+    def full(self):
+        name = self.division
+        if self.tier:
+            name += f" {self.tier}"
+        return name
+
+    def id(self) -> int:
+        total = RANK_DIVISIONS.index(self.division) * 1000
+        total += RANK_TIERS.index(self.tier) * 150
+        total += self.lp
+        return total
+
+    def games(self):
+        return self.wins + self.losses
+
+    def winrate(self):
+        return f'{self.wins / self.games() * 100:.2f}%'
+
+    def info(self):
+        s = ''
+        if self.division != 'UNRANKED':
+            s += str(self.lp) + ' LP, '
+        s += f'{self.games()} games'
+        if self.games() > 0:
+            s += f', {self.winrate()} WR'
+        return s
+
+    @classmethod
+    def from_data(cls, rankData: APILeagueEntry):
+        if rankData['tier'] in ['MASTER', 'GRANDMASTER', 'CHALLENGER']:
+            tier = None
+        else:
+            tier = cast(TierOption, rankData['rank'])
+
+        return cls(
+            cast(RankOption, rankData['tier']),
+            tier,
+            rankData['leaguePoints'],
+            rankData['wins'],
+            rankData['losses']
+        )
+
+    @classmethod
+    def unranked(cls):
+        return cls('UNRANKED', None, 0, 0, 0)
+
+
 @dataclass
 class UserInfo:
     id: str = ''
@@ -92,47 +160,13 @@ class UserInfo:
     summoner_name: str = 'Unknown User'
     level: int = 0
     icon: int = 1
-    rank_solo: RankOption = 'UNRANKED'
-    rank_flex: RankOption = 'UNRANKED'
-    lp_solo: int = 0
-    lp_flex: int = 0
-    wins_solo: int = 0
-    losses_solo: int = 0
-    wins_flex: int = 0
-    losses_flex: int = 0
-    max_division: RankOption = "UNRANKED"
+    ranks: RanksDict = field(default_factory=dict)
     top_champs: List[UserChamp] = field(default_factory=list)
     total_points: int = 0
     total_mastery: int = 0
 
-    def total_solo_games(self):
-        return self.wins_solo + self.losses_solo
-
-    def total_flex_games(self):
-        return self.wins_flex + self.losses_flex
-
-    def solo_winrate(self):
-        rate = self.wins_solo / self.total_solo_games()
-        return f'{rate * 100:.2f}%'
-
-    def flex_winrate(self):
-        rate = self.wins_flex / self.total_flex_games()
-        return f'{rate * 100:.2f}%'
-
-    def solo_info(self):
-        s = ''
-        if self.rank_solo != 'UNRANKED':
-            s += str(self.lp_solo) + ' LP, '
-        s += f'{self.total_solo_games()} games'
-        if self.total_solo_games() > 0:
-            s += f', {self.solo_winrate()} WR'
-        return s
-
-    def flex_info(self):
-        s = ''
-        if self.rank_flex != 'UNRANKED':
-            s += str(self.lp_flex) + ' LP, '
-        s += f'{self.total_flex_games()} games'
-        if self.total_flex_games() > 0:
-            s += f', {self.flex_winrate()} WR'
-        return s
+    @property
+    def max_division(self):
+        if self.ranks['Flex'].id() > self.ranks['Solo/Duo'].id():
+            return self.ranks['Flex'].division
+        return self.ranks['Solo/Duo'].division

@@ -1,8 +1,9 @@
+import json
 import aiohttp
-from typing import List
+from typing import List, cast
 from asyncio import Semaphore
 from utils import cache_with_timeout
-from .structs import GameInfo, PlayerInfo, RankOption, QueueType, UserInfo, UserChamp
+from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch
 
 
@@ -35,25 +36,6 @@ class RiotAPI:
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
         self.sem = Semaphore(5)
-
-    @classmethod
-    def is_rank_growth(cls, rank1: str, rank2: str) -> bool:
-        if rank1 == 'UNRANKED':
-            return True
-        elif rank2 == 'UNRANKED':
-            return False
-
-        r1, t1 = rank1.split(' ')
-        r2, t2 = rank2.split(' ')
-
-        wdiff = cls.queueWeight.get(r1, 0) - cls.queueWeight.get(r2, 0)
-        if wdiff > 0:
-            return False
-        elif wdiff < 0:
-            return True
-
-        tiers = ['I', 'II', 'III', 'IV']
-        return tiers.index(t1.upper()) > tiers.index(t2.upper())
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
@@ -90,19 +72,20 @@ class RiotAPI:
     @cache_with_timeout()
     async def get_ranked_info(self, user_id: str):
         data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-summoner/{user_id}")
+        ranks: RanksDict = {}
 
-        ranks = []
         for rankData in data.data:
-            if "rank" not in rankData:
-                continue
-            queue = rankData["queueType"]
-            tier = rankData["tier"]
-            rank = rankData["rank"]
-            lp = rankData["leaguePoints"]
-            wins = rankData["wins"]
-            losses = rankData["losses"]
-            rankArray = [queue, tier, rank, lp, wins, losses]
-            ranks.append(rankArray)
+            if rankData['queueType'] == 'RANKED_SOLO_5x5':
+                ranks['Solo/Duo'] = Rank.from_data(rankData)
+            elif rankData['queueType'] == 'RANKED_FLEX_SR':
+                ranks['Flex'] = Rank.from_data(rankData)
+
+        if 'Solo/Duo' not in ranks:
+            ranks['Solo/Duo'] = Rank.unranked()
+
+        if 'Flex' not in ranks:
+            ranks['Flex'] = Rank.unranked()
+
         return ranks
 
     @cache_with_timeout()
@@ -167,33 +150,17 @@ class RiotAPI:
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner.error() is not None:
             summoner.log_error(8, 'Couldn\'t get summoner from puuid')
-            return summoner
+            return cast(APIResponse[UserInfo], summoner)
 
         user = UserInfo(
             id=summoner.data["id"],
             puuid=puuid,
             summoner_name=summoner.data["name"],
             level=summoner.data["summonerLevel"],
-            icon=summoner.data["profileIconId"],
+            icon=summoner.data["profileIconId"]
         )
 
-        for rank in await self.get_ranked_info(user.id):
-            if rank[0] == "RANKED_SOLO_5x5":
-                user.rank_solo = f"{rank[1]} {rank[2]}"
-                user.lp_solo = rank[3]
-                user.wins_solo = rank[4]
-                user.losses_solo = rank[5]
-            elif rank[0] == "RANKED_FLEX_SR":
-                user.rank_flex = f"{rank[1]} {rank[2]}"
-                user.lp_flex = rank[3]
-                user.wins_flex = rank[4]
-                user.losses_flex = rank[5]
-            if (
-                self.queueWeight[user.max_division.upper()]
-                < self.queueWeight[rank[1].upper()]
-            ):
-                user.max_division = rank[1].upper()
-
+        user.ranks = await self.get_ranked_info(user.id)
         champions = await self.get_mastery_info(puuid)
 
         user.top_champs = champions[:3]
