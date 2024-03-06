@@ -10,10 +10,10 @@ def flat(matrix):
     return [item for row in matrix for item in row]
 
 
-def r_pad(t: str, w: int = 8):
+def r_pad(t: str, w: int = 8, pad: str = ' '):
     if len(t) >= w:
         return t
-    return t + ' ' * (w - len(t))
+    return t + pad * (w - len(t))
 
 
 def num_of(s: str, count: int):

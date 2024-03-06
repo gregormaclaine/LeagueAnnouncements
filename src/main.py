@@ -426,7 +426,7 @@ def main():
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="leaderboard", description="Get the ranked leaderboard of all tracked users")
-    async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo'):
+    async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo', view: Literal['Embed', 'Text'] = 'Embed'):
         log_command(interaction)
         ranked_players = events.get_ordered_rankings(mode)
 
@@ -436,8 +436,14 @@ def main():
             return
         tracked = tracked_players[g_id]
 
-        embed = embed_generator.leaderboard(mode, ranked_players, tracked)
-        await interaction.response.send_message(embed=embed)
+        if view == 'Embed':
+            embed = embed_generator.leaderboard(
+                mode, ranked_players[:24], tracked)
+            await interaction.response.send_message(embed=embed)
+        else:
+            text = embed_generator.leaderboard_string(
+                mode, ranked_players, tracked)
+            await interaction.response.send_message(text)
 
     # @bot.tree.command(name="sync", description="Refresh bot commands")
     # async def sync(interaction: discord.Interaction):

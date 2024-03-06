@@ -89,6 +89,7 @@ def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedU
         color=random.randint(0, 16777215),
     )
 
+    lines = []
     for i, p in enumerate(ranked_players):
         matches = [tp for tp in tracked_players if tp["puuid"] == p["puuid"]]
         if len(matches) == 0:
@@ -97,15 +98,45 @@ def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedU
             continue
         tp = matches[0]
 
-        line = f'{i + 1}. {tp['name']}#{tp['tag']}'
-        rank = f"{p['rank'].full()} ({p['rank'].lp} LP)"
+        part1 = f'{i + 1}. {tp['name']}#{tp['tag']}'
+        part2 = f"{p['rank'].full()} ({p['rank'].lp} LP)"
 
-        if i < 3:
-            line = f'**{line}**'
-            rank = f'**{rank}**'
+        lines.append((part1, part2))
 
-        embed.add_field(name='', value=line)
-        embed.add_field(name='', value=rank)
-        embed.add_field(name='', value='', inline=False)
+    if len(lines):
+        max_len = max(len(l[0]) for l in lines)
+
+        for i, (part1, part2) in enumerate(lines):
+            line = r_pad(part1, max_len + 2) + part2
+
+            if i < 3:
+                line = f'**{line}**'
+
+            embed.add_field(name='', value=line, inline=False)
 
     return embed
+
+
+def leaderboard_string(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedUserRank], tracked_players: List[TrackPlayer]) -> str:
+    lines = []
+    for i, p in enumerate(ranked_players):
+        matches = [tp for tp in tracked_players if tp["puuid"] == p["puuid"]]
+        if len(matches) == 0:
+            log(
+                f"Couldn't find event-memorised player in tracked_players (puuid={p['puuid']})", 'ERROR', 'main.embeds')
+            continue
+        tp = matches[0]
+
+        part1 = f'{i + 1}. {tp['name']}#{tp['tag']}'
+        part2 = f"{p['rank'].full()} ({p['rank'].lp} LP)"
+
+        lines.append((part1, part2))
+
+    text = f'Leaderboard - {mode}:\n```md\n'
+    if len(lines):
+        max_len = max(len(l[0]) for l in lines)
+        for i, (part1, part2) in enumerate(lines):
+            text += f'    {r_pad(part1, max_len + 2)}{part2}\n'
+
+    text += '```'
+    return text
