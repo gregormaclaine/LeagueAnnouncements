@@ -1,9 +1,7 @@
 import asyncio
-from dataclasses import dataclass
-from typing import Final, List, Literal, Type, TypedDict, Optional, cast
+from typing import List, Literal, TypedDict, cast
 from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent
-from riot.api import RiotAPI
-from game_info import UserInfo, GameInfo, RankOption
+from riot import RiotAPI, UserInfo, GameInfo, RankOption
 from logs import log
 from utils import flat, num_of
 
@@ -174,7 +172,7 @@ class EventManager():
             'lp': m['lp_solo']
         } for puuid, m in self.player_memory.items() if m['rank_solo'] != 'UNRANKED']
         ranked_players = cast(List[OrderedUserRank], ranked_players)
-        tiers = ['IV', 'III', 'II', 'I', '']
+        tiers = ['IV', 'III', 'II', 'I', None]
         ranked_players.sort(
             key=lambda x: RiotAPI.queueWeight[x['rank']] *
             1000 + tiers.index(x['tier']) * 100 + x['lp'],

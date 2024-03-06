@@ -1,8 +1,7 @@
 import json
 import traceback
 from os import path
-from typing import Any, List
-from game_info import TrackPlayer
+from typing import Any, List, TypedDict
 from logs import log
 
 
@@ -11,6 +10,14 @@ class SetEncoder(json.JSONEncoder):
         if isinstance(o, set):
             return list(o)
         return json.JSONEncoder.default(self, o)
+
+
+class TrackPlayer(TypedDict):
+    puuid: str
+    name: str
+    tag: str
+    level: int
+    claimed_users: set[int]
 
 
 class Storage:

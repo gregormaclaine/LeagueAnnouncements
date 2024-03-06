@@ -1,8 +1,7 @@
-from typing import cast
-import discord
-from colorist import Color, Effect
 import sys
 from datetime import datetime
+import discord
+from colorist import Color, Effect
 from utils import r_pad
 
 

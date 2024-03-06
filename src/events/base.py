@@ -1,10 +1,8 @@
-from dataclasses import dataclass
-from datetime import datetime
 import random
-
+from datetime import datetime
+from dataclasses import dataclass
 import discord
-
-from game_info import GameInfo, UserInfo
+from riot import GameInfo, UserInfo
 from utils import icon_url, random_celebration
 
 

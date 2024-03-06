@@ -1,11 +1,11 @@
 from math import ceil
+import traceback
 import discord
 from discord.ext import commands as discord_commands, tasks
 from typing import List, Literal, Optional, cast
-import traceback
 import embed_generator
 from events import BaseGameEvent
-from riot.api import RiotAPI
+from riot import RiotAPI
 from logs import log, log_command
 from event_manager import EventManager
 from utils import num_of, flat, print_header

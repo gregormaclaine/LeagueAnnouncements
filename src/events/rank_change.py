@@ -1,8 +1,7 @@
 from typing import Literal, override
-from .base import BaseGameEvent
-from game_info import GameInfo, RankOption, UserInfo
-from riot.api import RiotAPI
+from riot import RiotAPI, GameInfo, RankOption, UserInfo
 from utils import random_superlative, rank_assets
+from .base import BaseGameEvent
 
 
 class RankChangeEvent(BaseGameEvent):

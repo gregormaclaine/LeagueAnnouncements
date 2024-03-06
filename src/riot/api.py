@@ -1,8 +1,8 @@
 import aiohttp
 from typing import List
 from asyncio import Semaphore
-from game_info import GameInfo, PlayerInfo, RankOption, QueueType, UserInfo, UserChamp
 from utils import cache_with_timeout
+from .structs import GameInfo, PlayerInfo, RankOption, QueueType, UserInfo, UserChamp
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch
 
 

@@ -3,7 +3,8 @@ import requests
 import random
 from typing import List, Literal
 from event_manager import OrderedUserRank
-from game_info import UserInfo, TrackPlayer
+from storage import TrackPlayer
+from riot import UserInfo
 from utils import icon_url, r_pad, repair_champ_name, num_of, rank_assets
 from logs import log
 from config import LEAGUE_PATCH

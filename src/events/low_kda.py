@@ -1,5 +1,4 @@
 from typing import override
-
 from utils import random_superlative, rank_assets
 from .base import BaseGameEvent
 

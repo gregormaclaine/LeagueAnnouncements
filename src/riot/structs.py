@@ -1,7 +1,15 @@
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import List, Literal, TypedDict
+from typing import List, Literal
 from utils import r_pad
+
+
+type QueueType = Literal['Draft', 'Solo/Duo',
+                         'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
+
+
+type RankOption = Literal['UNRANKED', 'IRON', 'BRONZE', 'SILVER', 'GOLD',
+                          'PLATINUM', 'EMERALD', 'DIAMOND', 'MASTER', 'GRANDMASTER', 'CHALLENGER']
 
 
 @dataclass
@@ -28,10 +36,6 @@ class PlayerInfo:
         if self.deaths == 0:
             return "Perfect"
         return str(round((self.kills + self.assists) / self.deaths, 2))
-
-
-type QueueType = Literal['Draft', 'Solo/Duo',
-                         'Blind', 'Flex', 'ARAM', 'Clash', 'Other']
 
 
 @dataclass
@@ -79,10 +83,6 @@ class UserChamp:
     points: int
     last_play: int
     chest: bool
-
-
-type RankOption = Literal["UNRANKED", "IRON", "BRONZE", "SILVER", "GOLD",
-                          "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"]
 
 
 @dataclass
@@ -136,11 +136,3 @@ class UserInfo:
         if self.total_flex_games() > 0:
             s += f', {self.flex_winrate()} WR'
         return s
-
-
-class TrackPlayer(TypedDict):
-    puuid: str
-    name: str
-    tag: str
-    level: int
-    claimed_users: set[int]

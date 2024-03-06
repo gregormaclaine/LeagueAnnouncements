@@ -1,7 +1,7 @@
-from utils import random_superlative, rank_assets
-from game_info import GameInfo, UserInfo
-from .base import BaseGameEvent
 from typing import override
+from utils import random_superlative, rank_assets
+from riot import GameInfo, UserInfo
+from .base import BaseGameEvent
 
 
 class LoseStreakEvent(BaseGameEvent):
