@@ -142,15 +142,15 @@ class EventManager():
             if user1.error():
                 user1.log_error(
                     10, f"Couldn't get profile for puuid [{old}]", 'main.events')
-            elif user2.error:
+            elif user2.error():
                 user2.log_error(
                     11, f"Couldn't get profile for puuid [{new}]", 'main.events')
             elif game1 is None:
                 log(f"Couldn't get first user's last match [{
-                    self.player_memory[old]['last_game']}]")
+                    self.player_memory[old]['last_game']}]", 'ERROR', 'main.events')
             elif game2 is None:
                 log(f"Couldn't get second user's last match [{
-                    self.player_memory[new]['last_game']}]")
+                    self.player_memory[new]['last_game']}]", 'ERROR', 'main.events')
             else:
                 events.append(LeaderboardChangeEvent(
                     pos,
