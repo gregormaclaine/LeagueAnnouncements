@@ -190,7 +190,6 @@ def main():
 
         if offset < 0:
             log(tracked_players)
-            print(events.get_ordered_solo_rankings())
             await interaction.response.send_message('Offset can\'t be negative')
             return
 
@@ -429,7 +428,7 @@ def main():
     @bot.tree.command(name="leaderboard", description="Get the ranked leaderboard of all tracked users")
     async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo'):
         log_command(interaction)
-        ranked_players = events.get_ordered_solo_rankings()
+        ranked_players = events.get_ordered_rankings(mode)
 
         g_id = interaction.guild_id
         if g_id not in tracked_players:
