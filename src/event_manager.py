@@ -81,7 +81,7 @@ class EventManager():
         events = self.find_events_from_games(user, new_games, memory)
 
         for mode, rank in user.ranks.items():
-            if rank.is_same_as(memory['ranks'][mode]):
+            if not rank.is_same_as(memory['ranks'][mode]):
                 events.append(RankChangeEvent(
                     user, new_games[0],
                     old_rank=memory['ranks'][mode],
