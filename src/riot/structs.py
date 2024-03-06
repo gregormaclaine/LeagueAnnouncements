@@ -118,6 +118,9 @@ class Rank:
         total += self.lp
         return total
 
+    def is_same_as(self, other: Self):
+        return self.division == other.division and self.tier == other.tier
+
     def games(self):
         return self.wins + self.losses
 
