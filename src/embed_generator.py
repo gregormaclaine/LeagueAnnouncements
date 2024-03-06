@@ -89,8 +89,6 @@ def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedU
         color=random.randint(0, 16777215),
     )
 
-    max_len = max(map(len, (p["name"] for p in tracked_players)))
-
     for i, p in enumerate(ranked_players):
         matches = [tp for tp in tracked_players if tp["puuid"] == p["puuid"]]
         if len(matches) == 0:
@@ -99,12 +97,15 @@ def leaderboard(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedU
             continue
         tp = matches[0]
 
-        line = r_pad(f'{i + 1}. {tp['name']}#{tp['tag']}', max_len + 10)
-        line += f"({p['rank'].full()}: LP = {p['rank'].lp})"
+        line = f'{i + 1}. {tp['name']}#{tp['tag']}'
+        rank = f"{p['rank'].full()} ({p['rank'].lp} LP)"
 
         if i < 3:
             line = f'**{line}**'
+            rank = f'**{rank}**'
 
-        embed.add_field(name=line, value='', inline=False)
+        embed.add_field(name='', value=line)
+        embed.add_field(name='', value=rank)
+        embed.add_field(name='', value='', inline=False)
 
     return embed
