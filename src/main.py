@@ -23,7 +23,8 @@ def main():
     tracked_players, output_channels = storage.read()
 
     bot = discord_commands.Bot(command_prefix="!", intents=intents)
-    riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER, CONFIG.REGION)
+    riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER,
+                          CONFIG.REGION, CONFIG.API_THREADS)
     events = EventManager(riot_client)
 
     def get_mentions_from_events(events: List[BaseGameEvent], guild_id: int) -> str:

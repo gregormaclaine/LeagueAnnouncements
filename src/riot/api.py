@@ -30,12 +30,12 @@ class RiotAPI:
         "CHALLENGER": 9,
     }
 
-    def __init__(self, api_key: str, server: str, region: str):
+    def __init__(self, api_key: str, server: str, region: str, api_threads: int):
         self.api_key = api_key
         self.base_url = f"https://{server}.api.riotgames.com"
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
-        self.sem = Semaphore(5)
+        self.sem = Semaphore(api_threads)
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url

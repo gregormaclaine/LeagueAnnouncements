@@ -189,7 +189,7 @@ if __name__ == '__main__':
     from dotenv import load_dotenv
     load_dotenv()
 
-    riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe')
+    riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe', 2)
     events = EventManager(riot_client)
 
     user = asyncio.run(

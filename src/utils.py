@@ -39,13 +39,13 @@ def cache_with_timeout(seconds: int = 120):
         async def wrapper(*args, **kwargs):
             cached = cache.get(args)
             if cached:
-                # print(f'Hit cache - {func.__name__}')
+                # print(f'Cache ✅ - {func.__name__}{args[1:]}')
                 if (datetime.now() - cached[0]).seconds <= seconds:
                     return cached[1]
-                # print(f'Cache timout - {func.__name__}')
+                # print(f'Cache 🕒 - {func.__name__}{args[1:]}')
                 del cache[args]
 
-            # print(f'Running call - {func.__name__}')
+            # print(f'Cache ⏩ - {func.__name__}{args[1:]}')
             data = await func(*args, **kwargs)
             cache[args] = (datetime.now(), data)
             return data
