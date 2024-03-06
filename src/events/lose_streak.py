@@ -11,7 +11,7 @@ class LoseStreakEvent(BaseGameEvent):
 
     @override
     def embed(self):
-        embed = super().embed()
+        embed = super().embed(0x59D5E0)
         embed.set_thumbnail(url=rank_assets[self.user.max_division.upper()])
 
         embed.add_field(

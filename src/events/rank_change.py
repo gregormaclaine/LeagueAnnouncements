@@ -1,5 +1,5 @@
 from typing import Literal, override
-from riot import RiotAPI, GameInfo, UserInfo, Rank
+from riot import GameInfo, UserInfo, Rank
 from utils import random_superlative, rank_assets
 from .base import BaseGameEvent
 
@@ -13,7 +13,7 @@ class RankChangeEvent(BaseGameEvent):
 
     @override
     def embed(self):
-        embed = super().embed()
+        embed = super().embed(0x32CD32)
         embed.set_thumbnail(url=rank_assets[self.new_rank.division])
 
         embed.add_field(

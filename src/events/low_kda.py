@@ -6,7 +6,7 @@ from .base import BaseGameEvent
 class LowKDAEvent(BaseGameEvent):
     @override
     def embed(self):
-        embed = super().embed()
+        embed = super().embed(0xEE4B2B)
         embed.set_thumbnail(url=rank_assets[self.user.max_division.upper()])
 
         player = self.game.get_player(self.user.id)

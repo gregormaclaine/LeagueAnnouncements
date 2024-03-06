@@ -1,6 +1,7 @@
 import random
 from datetime import datetime
 from dataclasses import dataclass
+from typing import Optional
 import discord
 from riot import GameInfo, UserInfo
 from utils import icon_url, random_celebration
@@ -11,11 +12,11 @@ class BaseGameEvent:
     user: UserInfo
     game: GameInfo
 
-    def embed(self):
+    def embed(self, color: Optional[int] = None):
         embed = discord.Embed(
             title=f"{random_celebration()} {self.user.summoner_name}!",
             description=f"",
-            color=random.randint(0, 16777215),
+            color=random.randint(0, 16777215) if color is None else color,
         )
         embed.set_author(name=f'{self.user.summoner_name} (Lvl {self.user.level})',
                          icon_url=icon_url(self.user.icon))

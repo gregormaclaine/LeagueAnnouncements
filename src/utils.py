@@ -18,6 +18,12 @@ def num_of(s: str, count: int):
     return f'{count} {s}{'s' if count != 1 else ''}'
 
 
+def ordinal(num: int):
+    if num < 4:
+        return ['0th', '1st', '2nd', '3rd'][num]
+    return f'{num}th'
+
+
 def repair_champ_name(champ_name):
     new_champ_name = ""
     for i in champ_name:
