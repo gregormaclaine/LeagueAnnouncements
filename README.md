@@ -1,6 +1,12 @@
 # League of Legends Discord bot
 
-A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement, such as losing 3 or more games in a row or getting a KDA < 1.
+A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement. Currently the bot will announce the following achievements:
+
+- Finishing a game with a KDA < 1
+- Losing 3 or more games in a row
+  - A new announcement will be made per game
+- Being demoted **or premoted** between ranks in ranked play (Solo or Flex)
+- Overtaking another tracked player on a ranked leaderboard
 
 ## Usage
 
@@ -22,6 +28,8 @@ If you want to be pinged when it makes an announcement related to you, use the `
 /unclaim_profile {index} - Unlinks discord account from tracked player
 /who_claims {index} - Get list of users who have claimed an account
 
+/leaderboard {mode} {view} - Shows all ranked users in order based on either Solo or Flex rank. (View determines the style of the leaderboard)
+
 /set_channel {channel} {silent=false} - Set channel to which the announcements will be sent
 /run_checks - Manually check for new announcements (This is done automatically every 5 minutes)
 
@@ -31,6 +39,8 @@ If you want to be pinged when it makes an announcement related to you, use the `
 
 ```
 /track_many {users} - Bulk track multiple users (player#tag,player2#tag2...)
+
+/rollback_memory {username} {games = 1} - Forgets a certain number of games for a particular user. (If username is not given, effect applies to all tracked users)
 
 /autochecker status - Get information about the automatic checker
 /autochecker pause - Pauses the automatic checker
