@@ -94,8 +94,7 @@ RANK_DIVISIONS: List[RankOption] = ['UNRANKED', 'IRON', 'BRONZE', 'SILVER',
                                     'GOLD', 'PLATINUM', 'EMERALD', 'DIAMOND',
                                     'MASTER', 'GRANDMASTER', 'CHALLENGER',]
 
-RANK_TIERS: List[Optional[TierOption]] = [
-    'I', 'II', 'III', 'IV', None]
+RANK_TIERS: List[Optional[TierOption]] = [None, 'IV', 'III', 'II', 'I']
 
 
 @dataclass
