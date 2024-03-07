@@ -31,6 +31,7 @@ class EventManager():
     def __init__(self, riot: RiotAPI) -> None:
         self.riot = riot
         self.player_memory = {}
+        self.leaderboard_memory = {}
 
     async def check(self, puuids: List[str], guild_id: Optional[int] = None, quiet=False):
         if not quiet:
