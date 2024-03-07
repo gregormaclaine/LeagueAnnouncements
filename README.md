@@ -1,6 +1,6 @@
 # League of Legends Discord bot
 
-A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement. Currently the bot will announce the following achievements:
+A Discord bot that allows you to track your own League of Legends accounts and announces to the server when you have made a particular achievement. Currently the bot will announce the following events:
 
 - Finishing a game with a KDA < 1
 - Losing 3 or more games in a row
