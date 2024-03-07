@@ -36,7 +36,7 @@ def repair_champ_name(champ_name):
     return new_champ_name
 
 
-def icon_url(icon_id):
+def icon_url(icon_id: int):
     return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 

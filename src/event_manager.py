@@ -26,7 +26,7 @@ class EventManager():
 
     riot: RiotAPI
     player_memory: dict[str, Memory]
-    leaderboard_memory: dict[int, List[str]]
+    leaderboard_memory: dict[int, dict[Literal['Solo/Duo', 'Flex'], List[str]]]
 
     def __init__(self, riot: RiotAPI) -> None:
         self.riot = riot
@@ -123,10 +123,10 @@ class EventManager():
         ranks = self.get_ordered_rankings(mode)
         new_order = [r['puuid'] for r in ranks]
         if guild_id not in self.leaderboard_memory:
-            self.leaderboard_memory[guild_id] = new_order
+            self.leaderboard_memory[guild_id][mode] = new_order
             return []
 
-        old_order = self.leaderboard_memory[guild_id]
+        old_order = self.leaderboard_memory[guild_id][mode]
 
         union_puuids = set(old_order).union(set(new_order))
         new_order = [p for p in new_order if p in union_puuids]
@@ -160,7 +160,7 @@ class EventManager():
                     mode
                 ))
 
-        self.leaderboard_memory[guild_id] = [r['puuid'] for r in ranks]
+        self.leaderboard_memory[guild_id][mode] = [r['puuid'] for r in ranks]
         return events
 
     def match_participant(self, user_id: str, game: GameInfo):
