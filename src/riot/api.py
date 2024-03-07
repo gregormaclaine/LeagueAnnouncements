@@ -1,5 +1,5 @@
 import aiohttp
-from typing import List, cast
+from typing import List, Literal, cast
 from asyncio import Semaphore
 from utils import cache_with_timeout
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
@@ -69,8 +69,11 @@ class RiotAPI:
         return await self.api(f"/lol/match/v5/matches/{match_id}", universal=True)
 
     @cache_with_timeout()
-    async def get_ranked_info(self, user_id: str):
+    async def get_ranked_info(self, user_id: str) -> APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]]:
         data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-summoner/{user_id}")
+        if data.error():
+            return cast(APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]], data)
+
         ranks: RanksDict = {}
 
         for rankData in data.data:
@@ -85,16 +88,19 @@ class RiotAPI:
         if 'Flex' not in ranks:
             ranks['Flex'] = Rank.unranked()
 
-        return ranks
+        return APIResponse(200, ranks)
 
     @cache_with_timeout()
-    async def get_mastery_info(self, puuid: str) -> List[UserChamp]:
+    async def get_mastery_info(self, puuid: str) -> APIResponse[List[UserChamp]]:
         data = await self.api(f"/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}")
-        return [
+        if data.error():
+            return data
+
+        return APIResponse(200, [
             UserChamp(c["championId"], c["championLevel"], points=c["championPoints"],
                       last_play=c["lastPlayTime"],    chest=c["chestGranted"])
             for c in data.data
-        ]
+        ])
 
     async def get_match_info_by_id(self, match_id: str):
         data_res = await self.get_raw_match_info_by_id(match_id)
@@ -159,11 +165,20 @@ class RiotAPI:
             icon=summoner.data["profileIconId"]
         )
 
-        user.ranks = await self.get_ranked_info(user.id)
-        champions = await self.get_mastery_info(puuid)
+        ranks = await self.get_ranked_info(user.id)
+        if ranks.error():
+            ranks.log_error(
+                12, f'Couldn\'t get summoner ranked info from user id [{user.id}]')
+            return cast(APIResponse[UserInfo], ranks)
 
-        user.top_champs = champions[:3]
-        user.total_mastery = sum(map(lambda c: c.level, champions))
-        user.total_points = sum(map(lambda c: c.points, champions))
+        champions = await self.get_mastery_info(puuid)
+        if champions.error():
+            champions.log_error(
+                13, f'Couldn\'t get summoner mastery from puuid [{puuid}]')
+            return cast(APIResponse[UserInfo], champions)
+
+        user.top_champs = champions.data[:3]
+        user.total_mastery = sum(map(lambda c: c.level, champions.data))
+        user.total_points = sum(map(lambda c: c.points, champions.data))
 
         return APIResponse(data=user)
