@@ -123,10 +123,14 @@ class EventManager():
         ranks = self.get_ordered_rankings(mode)
         new_order = [r['puuid'] for r in ranks]
         if guild_id not in self.leaderboard_memory:
-            self.leaderboard_memory[guild_id][mode] = new_order
+            self.leaderboard_memory[guild_id] = {mode: new_order}
             return []
 
-        old_order = self.leaderboard_memory[guild_id][mode]
+        memory = self.leaderboard_memory[guild_id]
+        if mode not in memory:
+            self.leaderboard_memory[guild_id][mode] = new_order
+            return []
+        old_order = memory[mode]
 
         union_puuids = set(old_order).union(set(new_order))
         new_order = [p for p in new_order if p in union_puuids]

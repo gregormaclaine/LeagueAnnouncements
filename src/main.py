@@ -222,7 +222,7 @@ def main():
 
         await interaction.response.defer()
 
-        announcments = await events.check([p['puuid'] for p in tracked])
+        announcments = await events.check([p['puuid'] for p in tracked], g_id)
 
         if len(announcments) == 0:
             await interaction.followup.send('No new announcements')
@@ -469,7 +469,7 @@ def main():
                 continue
 
             try:
-                announcments = await events.check([p['puuid'] for p in tracked_players[guild_id]])
+                announcments = await events.check([p['puuid'] for p in tracked_players[guild_id]], guild_id)
             except Exception:
                 log(f'Couldn\'t check announcements for [{guild_id}]', 'ERROR')
                 log(traceback.format_exc(), 'ERROR')
