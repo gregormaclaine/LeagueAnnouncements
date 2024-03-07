@@ -170,6 +170,7 @@ class RiotAPI:
             ranks.log_error(
                 12, f'Couldn\'t get summoner ranked info from user id [{user.id}]')
             return cast(APIResponse[UserInfo], ranks)
+        user.ranks = ranks.data
 
         champions = await self.get_mastery_info(puuid)
         if champions.error():
