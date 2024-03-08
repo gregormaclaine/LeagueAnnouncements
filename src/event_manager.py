@@ -158,7 +158,7 @@ class EventManager():
                     self.player_memory[new]['last_game']}]", 'ERROR', 'main.events')
             else:
                 events.append(LeaderboardChangeEvent(
-                    pos,
+                    pos + 1,
                     user1.data,
                     user2.data,
                     game1 if game1.start_time > game2.start_time else game2,
