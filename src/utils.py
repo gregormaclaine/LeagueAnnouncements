@@ -1,9 +1,9 @@
 import random
 from datetime import datetime
-from typing import Any, List, TypeVar
+from typing import ParamSpec, Awaitable, Callable, Coroutine, List
 from config import LEAGUE_PATCH
 
-T = TypeVar('T')
+Params = ParamSpec('Params')
 
 
 def flat(matrix):
@@ -41,8 +41,8 @@ def icon_url(icon_id: int):
 
 
 def cache_with_timeout(seconds: int = 120):
-    def decorator(func):
-        cache: dict[tuple, tuple[datetime, Any]] = {}
+    def decorator[T](func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
+        cache: dict[tuple, tuple[datetime, T]] = {}
 
         async def wrapper(*args, **kwargs):
             cached = cache.get(args)
@@ -125,7 +125,7 @@ def print_header():
     print('| ' + banner_art[1:].replace('\n', '\n| '))
 
 
-def find_all_swaps(old: List[T], new: List[T]) -> List[tuple[int, T, T]]:
+def find_all_swaps[T](old: List[T], new: List[T]) -> List[tuple[int, T, T]]:
     """
     Finds the position changes between two ordered lists of items. The algorithm is not
     perfect, but it works for cases with small numbers of swaps there is not a lot of mobility.

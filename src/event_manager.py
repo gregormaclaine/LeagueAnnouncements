@@ -235,7 +235,7 @@ class EventManager():
         return True
 
 
-if __name__ == '__main__':
+async def _testing():
     import os
     from dotenv import load_dotenv
     load_dotenv()
@@ -243,12 +243,16 @@ if __name__ == '__main__':
     riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe', 2)
     events = EventManager(riot_client)
 
-    user = asyncio.run(
-        riot_client.get_riot_account_puuid('im not from here', '9969'))
+    user = await riot_client.get_riot_account_puuid('im not from here', '9969')
     if user.error():
         user.log_error(0)
         exit(1)
     puuid = user.data['puuid']
     print(puuid)
-    asyncio.run(events.set_memory_to_game(puuid, offset=1))
-    print([e for e in asyncio.run(events.check([puuid]))])
+    await events.set_memory_to_game(puuid, offset=1)
+    events = await events.check([puuid])
+    print([e for e in events])
+
+
+if __name__ == '__main__':
+    asyncio.run(_testing())

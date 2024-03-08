@@ -1,13 +1,11 @@
-from typing import Literal, Optional, Generic, TypeVar, TypedDict, Final, List
+from typing import Literal, Optional, TypedDict, Final, List
 from logs import log
-
-T = TypeVar('T')
 
 type APIError = Literal['unknown', 'rate-limit', 'invalid-api-key', 'unknown',
                         'not-found', 'server-internal', 'bad-gateway', 'gateway-timeout']
 
 
-class APIResponse(Generic[T]):
+class APIResponse[T]:
     ERROR_TYPES: Final[dict[int, Optional[APIError]]] = {
         200: None,
 
