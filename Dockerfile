@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ .
 
+COPY assets/ ./assets/
+
 CMD [ "python", "-u", "./main.py"]
