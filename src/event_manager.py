@@ -133,7 +133,7 @@ class EventManager():
             return []
         old_order = memory[mode]
 
-        union_puuids = set(old_order).union(set(new_order))
+        union_puuids = set(old_order).intersection(set(new_order))
         new_order = [p for p in new_order if p in union_puuids]
         old_order = [p for p in old_order if p in union_puuids]
 
