@@ -12,6 +12,8 @@ from utils import num_of, flat, print_header
 from config import get_config
 from storage import Storage
 
+ROLAND_USER_ID = 698818240184451103
+
 
 def main():
     print_header()
@@ -163,6 +165,10 @@ def main():
 
         if index < 1:
             await interaction.response.send_message(f'Index must be a non-negative integer')
+            return
+
+        if interaction.user.id == ROLAND_USER_ID:
+            await interaction.response.send_message(file=discord.File('assets/nuh-uh.gif'))
             return
 
         g_id = interaction.guild_id
