@@ -1,5 +1,6 @@
 from typing import Literal, override
 from riot import GameInfo, UserInfo, Rank
+import discord
 from utils import random_superlative, rank_assets
 from .base import BaseGameEvent
 
@@ -11,7 +12,13 @@ class TotalGamesEvent(BaseGameEvent):
 
     @override
     def embed(self):
-        embed = super().embed(0xff80c5)
+        embed = discord.Embed(
+            title=f"!! MAJOR GAME MILESTONE REACHED !!",
+            description=f"",
+            color=0xff80c5,
+        )
+
+        embed.set_author(name=f'Milestones - {self.mode}')
 
         rank = self.user.ranks[self.mode]
 

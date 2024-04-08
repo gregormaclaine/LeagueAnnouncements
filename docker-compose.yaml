@@ -1,11 +1,16 @@
 services:
   league-bot:
     build: .
+    volumes:
+      - persistent-storage:/files/:rw
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       RIOT_TOKEN: ${RIOT_TOKEN}
       OWNER_DISCORD_ID: ${OWNER_DISCORD_ID}
-      FILES_PATH: ${FILES_PATH}
+      FILES_PATH: files
       API_THREADS: 2
       SERVER: "euw1"
       REGION: "europe"
+
+volumes:
+  persistent-storage:
