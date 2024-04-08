@@ -92,7 +92,7 @@ class UserChamp:
 
 RANK_DIVISIONS: List[RankOption] = ['UNRANKED', 'IRON', 'BRONZE', 'SILVER',
                                     'GOLD', 'PLATINUM', 'EMERALD', 'DIAMOND',
-                                    'MASTER', 'GRANDMASTER', 'CHALLENGER',]
+                                    'MASTER', 'GRANDMASTER', 'CHALLENGER']
 
 RANK_TIERS: List[Optional[TierOption]] = [None, 'IV', 'III', 'II', 'I']
 
@@ -112,6 +112,10 @@ class Rank:
         return name
 
     def id(self) -> int:
+        '''
+        Returns a unique score to distinguish different divisions, tiers, and lp.
+        A higher id means that the rank is higher quality.
+        '''
         total = RANK_DIVISIONS.index(self.division) * 1000
         total += RANK_TIERS.index(self.tier) * 150
         total += self.lp

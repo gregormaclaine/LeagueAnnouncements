@@ -1,7 +1,7 @@
 import asyncio
 import dataclasses
 from typing import List, Literal, Optional, TypedDict, cast
-from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent, LeaderboardChangeEvent
+from events import BaseGameEvent, LowKDAEvent, LoseStreakEvent, RankChangeEvent, LeaderboardChangeEvent, TotalGamesEvent
 from riot import RiotAPI, UserInfo, GameInfo, RanksDict, Rank
 from logs import log
 from utils import flat, num_of, find_all_swaps
@@ -90,6 +90,9 @@ class EventManager():
                     old_rank=memory['ranks'][mode],
                     mode=mode
                 ))
+
+            if self.is_milestone_game(rank.games()) and rank.games() > memory['ranks'][mode].games():
+                events.append(TotalGamesEvent(user, new_games[0], mode))
 
         await self.remember_history(user, game_ids)
 
@@ -216,6 +219,11 @@ class EventManager():
         ranked_players = cast(List[OrderedUserRank], ranked_players)
         ranked_players.sort(key=lambda x: x['rank'].id(), reverse=True)
         return ranked_players
+
+    def is_milestone_game(self, game_num: int) -> bool:
+        if game_num % 50 == 0 and game_num <= 250:
+            return True
+        return game_num % 100 == 0
 
     async def set_memory_to_game(self, puuid: str, offset: int = 0) -> bool:
         response = await self.riot.get_profile_info(puuid)
