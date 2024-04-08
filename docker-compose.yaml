@@ -2,7 +2,7 @@ services:
   league-bot:
     build: .
     volumes:
-      - persistent-storage:/files/:rw
+      - league-announcements-dev:/files/:rw
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       RIOT_TOKEN: ${RIOT_TOKEN}
@@ -13,4 +13,5 @@ services:
       REGION: "europe"
 
 volumes:
-  persistent-storage:
+  league-announcements-dev:
+    external: true
