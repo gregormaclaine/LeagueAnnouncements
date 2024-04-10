@@ -157,13 +157,18 @@ class RiotAPI:
             summoner.log_error(8, 'Couldn\'t get summoner from puuid')
             return cast(APIResponse[UserInfo], summoner)
 
-        user = UserInfo(
-            id=summoner.data["id"],
-            puuid=puuid,
-            summoner_name=summoner.data["name"],
-            level=summoner.data["summonerLevel"],
-            icon=summoner.data["profileIconId"]
-        )
+        try:
+            user = UserInfo(
+                id=summoner.data["id"],
+                puuid=puuid,
+                summoner_name=summoner.data["name"],
+                level=summoner.data["summonerLevel"],
+                icon=summoner.data["profileIconId"]
+            )
+        except KeyError:
+            summoner.log_error(
+                14, 'Couldn\'t read summoner data: ' + str(summoner.data))
+            return cast(APIResponse[UserInfo], summoner)
 
         ranks = await self.get_ranked_info(user.id)
         if ranks.error():
