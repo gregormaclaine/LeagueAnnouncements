@@ -56,7 +56,7 @@ class RiotAPI:
 
     @cache_with_timeout(12 * 60 * 60)
     async def get_summoner_name_from_puuid(self, puuid: str) -> APIResponse[APISummonerName]:
-        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid)
+        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid, universal=True)
 
     @cache_with_timeout(270)
     async def get_summoner_by_puuid(self, puuid: str) -> APIResponse[APISummoner]:
