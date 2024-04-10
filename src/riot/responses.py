@@ -64,7 +64,8 @@ class APIResponse[T]:
             log(f'Error: An unknown error ({
                 self.status}) occured - {self.data}', 'ERROR', source)
         else:
-            log('Error: ' + self.ERROR_MSG[self.status], 'ERROR', source)
+            log('Error: ' + self.ERROR_MSG.get(self.status,
+                f'Unknown error ({self.status})'), 'ERROR', source)
 
 
 class APISummoner(TypedDict):
