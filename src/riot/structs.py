@@ -164,6 +164,7 @@ class UserInfo:
     id: str = ''
     puuid: str = ''
     summoner_name: str = 'Unknown User'
+    summoner_tag: str = ''
     level: int = 0
     icon: int = 1
     ranks: RanksDict = field(default_factory=dict)

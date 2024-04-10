@@ -68,11 +68,16 @@ class APIResponse[T]:
                 f'Unknown error ({self.status})'), 'ERROR', source)
 
 
+class APISummonerName(TypedDict):
+    puuid: str
+    gameName: str
+    tagLine: str
+
+
 class APISummoner(TypedDict):
     accountId: str
     profileIconId: int
     revisionDate: int
-    name: str
     id: str
     puuid: str
     summonerLevel: int
