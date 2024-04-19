@@ -64,14 +64,20 @@ class APIResponse[T]:
             log(f'Error: An unknown error ({
                 self.status}) occured - {self.data}', 'ERROR', source)
         else:
-            log('Error: ' + self.ERROR_MSG[self.status], 'ERROR', source)
+            log('Error: ' + self.ERROR_MSG.get(self.status,
+                f'Unknown error ({self.status})'), 'ERROR', source)
+
+
+class APISummonerName(TypedDict):
+    puuid: str
+    gameName: str
+    tagLine: str
 
 
 class APISummoner(TypedDict):
     accountId: str
     profileIconId: int
     revisionDate: int
-    name: str
     id: str
     puuid: str
     summonerLevel: int

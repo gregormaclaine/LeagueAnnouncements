@@ -3,7 +3,7 @@ from typing import List, Literal, cast
 from asyncio import Semaphore
 from utils import cache_with_timeout
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
-from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch
+from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName
 
 
 class RiotAPI:
@@ -53,6 +53,10 @@ class RiotAPI:
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:
         url = f"/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
         return await self.api(url, universal=True)
+
+    @cache_with_timeout(12 * 60 * 60)
+    async def get_summoner_name_from_puuid(self, puuid: str) -> APIResponse[APISummonerName]:
+        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid, universal=True)
 
     @cache_with_timeout(270)
     async def get_summoner_by_puuid(self, puuid: str) -> APIResponse[APISummoner]:
@@ -152,18 +156,30 @@ class RiotAPI:
                         winner, participants, queue_type)
 
     async def get_profile_info(self, puuid: str) -> APIResponse[UserInfo]:
+        summoner_name = await self.get_summoner_name_from_puuid(puuid)
+        if summoner_name.error() is not None:
+            summoner_name.log_error(
+                15, 'Couldn\'t get summoner name info from puuid')
+            return cast(APIResponse[UserInfo], summoner_name)
+
         summoner = await self.get_summoner_by_puuid(puuid)
         if summoner.error() is not None:
             summoner.log_error(8, 'Couldn\'t get summoner from puuid')
             return cast(APIResponse[UserInfo], summoner)
 
-        user = UserInfo(
-            id=summoner.data["id"],
-            puuid=puuid,
-            summoner_name=summoner.data["name"],
-            level=summoner.data["summonerLevel"],
-            icon=summoner.data["profileIconId"]
-        )
+        try:
+            user = UserInfo(
+                id=summoner.data["id"],
+                puuid=puuid,
+                summoner_name=summoner_name.data['gameName'],
+                summoner_tag=summoner_name.data['tagLine'],
+                level=summoner.data["summonerLevel"],
+                icon=summoner.data["profileIconId"]
+            )
+        except KeyError:
+            summoner.log_error(
+                14, 'Couldn\'t read summoner data: ' + str(summoner.data))
+            return cast(APIResponse[UserInfo], summoner)
 
         ranks = await self.get_ranked_info(user.id)
         if ranks.error():
