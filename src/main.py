@@ -10,7 +10,7 @@ from logs import log, log_command
 from event_manager import EventManager
 from utils import num_of, flat, print_header
 from config import get_config
-from storage import Storage
+import storage
 
 ROLAND_USER_ID = 698818240184451103
 
@@ -18,13 +18,11 @@ ROLAND_USER_ID = 698818240184451103
 def main():
     print_header()
     CONFIG = get_config()
-    intents = discord.Intents.default()
-
-    storage = Storage(CONFIG.FILES_PATH)
 
     tracked_players, output_channels = storage.read()
 
-    bot = discord_commands.Bot(command_prefix="!", intents=intents)
+    bot = discord_commands.Bot(
+        command_prefix="!", intents=discord.Intents.default())
     riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER,
                           CONFIG.REGION, CONFIG.API_THREADS)
     events = EventManager(riot_client)
@@ -451,15 +449,25 @@ def main():
                 mode, ranked_players, tracked)
             await interaction.response.send_message(text)
 
+    @bot.tree.command(name="export_memory", description="Exports all of the persistent memory of the bot")
+    async def export_memory(interaction: discord.Interaction):
+        log_command(interaction)
+        if interaction.user.id != CONFIG.OWNER_DISCORD_ID:
+            await interaction.response.send_message('You do not have the permissions to use this command')
+            return
+
+        export = storage.export_memory()
+        await interaction.response.send_message(export)
+
     # @bot.tree.command(name="sync", description="Refresh bot commands")
     # async def sync(interaction: discord.Interaction):
     #     log_command(interaction)
     #     if interaction.user.id != CONFIG.OWNER_DISCORD_ID:
     #         await interaction.response.send_message('You do not have the permissions to use this command')
+    #         return
     #     await interaction.response.defer()
     #     await bot.tree.sync(guild=discord.Object(interaction.guild_id))
     #     await interaction.followup.send('Commands Synced')
-
     def update_remembered_levels():
         for puuid, memory in events.player_memory.items():
             for tracked in tracked_players.values():
