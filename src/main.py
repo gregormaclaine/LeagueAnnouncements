@@ -10,7 +10,7 @@ from logs import log, log_command
 from event_manager import EventManager
 from utils import num_of, flat, print_header
 from config import get_config
-from storage import Storage
+import storage
 
 ROLAND_USER_ID = 698818240184451103
 
@@ -19,8 +19,6 @@ def main():
     print_header()
     CONFIG = get_config()
     intents = discord.Intents.default()
-
-    storage = Storage(CONFIG.FILES_PATH)
 
     tracked_players, output_channels = storage.read()
 

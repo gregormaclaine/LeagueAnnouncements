@@ -23,7 +23,14 @@ def invalid_env(msg: str):
     print(f'Error:  - {msg}')
 
 
+global_stored_config: Optional[Config] = None
+
+
 def get_config():
+    global global_stored_config
+    if global_stored_config is not None:
+        return global_stored_config
+
     RIOT_TOKEN = os.getenv("RIOT_TOKEN")
     DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -60,7 +67,7 @@ def get_config():
             invalid_env('API_THREADS must be a number')
             exit(1)
 
-    return Config(
+    global_stored_config = Config(
         RIOT_TOKEN,
         DISCORD_TOKEN,
         os.getenv("SERVER", "euw1"),
@@ -69,3 +76,4 @@ def get_config():
         OWNER_DISCORD_ID,
         API_THREADS
     )
+    return global_stored_config
