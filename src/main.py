@@ -93,13 +93,13 @@ def main():
         tracked_players[g_id].append({
             'puuid': user.puuid,
             'name': user.summoner_name,
-            'tag': tag.upper(),
+            'tag': user.summoner_tag.upper(),
             'level': user.level,
             'claimed_users': set()
         })
 
         await interaction.response.send_message(
-            f'Began tracking {user.summoner_name}#{tag}.',
+            f'Began tracking {user.summoner_name}#{user.summoner_tag}.',
             embed=embed_generator.mini_user(user)
         )
         await events.check([user.puuid], quiet=True)
