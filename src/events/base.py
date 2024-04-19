@@ -1,7 +1,7 @@
 import random
 from datetime import datetime
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Literal
 import discord
 from riot import GameInfo, UserInfo
 from utils import icon_url, random_celebration
@@ -11,6 +11,7 @@ from utils import icon_url, random_celebration
 class BaseGameEvent:
     user: UserInfo
     game: GameInfo
+    type: Literal['embed', 'image'] = 'embed'
 
     def embed(self, color: Optional[int] = None):
         embed = discord.Embed(
@@ -26,3 +27,6 @@ class BaseGameEvent:
         embed.set_footer(text=f'Game played at {time}')
 
         return embed
+
+    def image(self) -> str:
+        return ''

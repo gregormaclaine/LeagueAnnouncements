@@ -234,7 +234,7 @@ def main():
             await interaction.followup.send('No new announcements')
             return
 
-        embeds = [e.embed() for e in announcments]
+        embeds = [e.embed() for e in announcments if e.type == 'embed']
         mentions = get_mentions_from_events(announcments[:10], g_id)
         if len(embeds) > 10:
             mentions += f' (And {num_of('other announcement',
@@ -484,8 +484,9 @@ def main():
             if len(announcments) == 0:
                 continue
 
-            embeds = [e.embed() for e in announcments]
+            embeds = [e.embed() for e in announcments if e.type == 'embed']
             channel = cast(discord.TextChannel, bot.get_channel(channel_id))
+            await channel.send('Here is an extra message')
             for i in range(0, ceil(len(embeds) / 10), 10):
                 mentions = get_mentions_from_events(
                     announcments[i:i + 10], guild_id)

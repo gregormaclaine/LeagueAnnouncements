@@ -3,12 +3,21 @@ from riot import GameInfo, UserInfo, Rank
 import discord
 from utils import random_superlative, rank_assets
 from .base import BaseGameEvent
+from img_gen import generate_certificate
+from uuid import uuid4
 
 
 class TotalGamesEvent(BaseGameEvent):
+    type = 'image'
+
     def __init__(self, user: UserInfo, game: GameInfo, mode: Literal['Solo/Duo', 'Flex']):
         super().__init__(user, game)
         self.mode = mode
+
+    @override
+    def image(self) -> str:
+        name = uuid4() + '.png'
+        generate_certificate()
 
     @override
     def embed(self):
