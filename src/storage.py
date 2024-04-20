@@ -36,6 +36,7 @@ class AllottedFile(TypedDict):
     expiry: datetime
 
 
+write_memory = {}
 allotted_files: List[AllottedFile] = []
 
 
@@ -52,6 +53,8 @@ def read() -> tuple[dict[int, List[TrackPlayer]], dict[int, int]]:
 
             try:
                 data = extract_from_data(memory)
+                write_memory['tracked_players'] = data[0]
+                write_memory['output_channels'] = data[1]
                 allotted_files = data[2]
                 log('Successfully loaded persistent memory',
                     source='main.storage')
@@ -91,6 +94,13 @@ def export_memory() -> str:
 
 
 def write(tracked_players: dict[int, List[TrackPlayer]], output_channels: dict[int, int]):
+    if tracked_players is None:
+        tracked_players = write_memory['tracked_players']
+        output_channels = write_memory['output_channels']
+    else:
+        write_memory['tracked_players'] = tracked_players
+        write_memory['output_channels'] = output_channels
+
     with open(memory_path, 'w') as f:
         data = {'tracked_players': tracked_players,
                 'output_channels': output_channels,
@@ -109,11 +119,12 @@ def clear_expired_files():
 
 def allot_file(ext: str, life_span: timedelta = timedelta(hours=24)) -> AllottedFile:
     clear_expired_files()
-    filename = uuid4() + '.' + ext
+    filename = f'{uuid4()}.{ext}'
     file = AllottedFile(
         name=filename,
         path=path.join(FILES_PATH, filename),
         expiry=datetime.now() + life_span)
 
     allotted_files.append(file)
+    write(None, None)
     return file

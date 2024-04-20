@@ -232,12 +232,26 @@ def main():
             await interaction.followup.send('No new announcements')
             return
 
-        embeds = [e.embed() for e in announcments if e.type == 'embed']
-        mentions = get_mentions_from_events(announcments[:10], g_id)
-        if len(embeds) > 10:
-            mentions += f' (And {num_of('other announcement',
-                                        len(embeds) - 10)}...)'
-        await interaction.followup.send(mentions, embeds=embeds[:10])
+        image_events = [e for e in announcments if e.type == 'image']
+        if len(image_events) > 0:
+            if channel_id := output_channels.get(g_id):
+                get_mentions_from_events(image_events, g_id)
+                files = [discord.File(e.image()) for e in image_events]
+                channel = cast(discord.TextChannel,
+                               bot.get_channel(channel_id))
+                await channel.send(files=files)
+
+        embed_events = [e for e in announcments if e.type == 'embed']
+        if len(embed_events) > 0:
+            embeds = [e.embed() for e in embed_events]
+            mentions = get_mentions_from_events(embed_events[:10], g_id)
+
+            if len(embeds) > 10:
+                mentions += f' (And {num_of('other announcement',
+                                            len(embeds) - 10)}...)'
+            await interaction.followup.send(mentions, embeds=embeds[:10])
+        else:
+            await interaction.followup.send('No embed announcements...')
 
     @bot.tree.command(name="rollback_memory", description="Resets tracking to before a certain number of games for a user")
     async def rollback_memory(interaction: discord.Interaction, username: Optional[str] = None, games: int = 1):
@@ -494,7 +508,6 @@ def main():
 
             embeds = [e.embed() for e in announcments if e.type == 'embed']
             channel = cast(discord.TextChannel, bot.get_channel(channel_id))
-            await channel.send('Here is an extra message')
             for i in range(0, ceil(len(embeds) / 10), 10):
                 mentions = get_mentions_from_events(
                     announcments[i:i + 10], guild_id)

@@ -221,6 +221,7 @@ class EventManager():
         return ranked_players
 
     def is_milestone_game(self, game_num: int) -> bool:
+        return True
         if game_num % 50 == 0 and game_num <= 250:
             return True
         return game_num % 100 == 0
@@ -232,6 +233,9 @@ class EventManager():
                 3, 'Couldn\'t get profile from puuid', 'main.events')
             return False
         user: UserInfo = response.data
+
+        # This is not accurate, but it accomplishes the thing I need to test for right now
+        user.ranks['Solo/Duo'].wins -= offset
 
         matches_res = await self.riot.get_matches_ids_by_puuid(puuid, 20)
         if matches_res.error():

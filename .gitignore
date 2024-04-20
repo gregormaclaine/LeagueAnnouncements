@@ -17,5 +17,6 @@ env.bak/
 venv.bak/
 
 temp/
+temp.*
 files/
 .DS_Store
