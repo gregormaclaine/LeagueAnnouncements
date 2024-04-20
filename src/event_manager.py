@@ -220,6 +220,14 @@ class EventManager():
         ranked_players.sort(key=lambda x: x['rank'].id(), reverse=True)
         return ranked_players
 
+    def get_ordered_total_games(self, mode: Literal['Solo/Duo', 'Flex']) -> List[OrderedUserRank]:
+        players = [{'puuid': puuid, 'rank': m['ranks'][mode]}
+                   for puuid, m in self.player_memory.items()
+                   if m['ranks'][mode].games() > 0]
+        players = cast(List[OrderedUserRank], players)
+        players.sort(key=lambda x: x['rank'].games(), reverse=True)
+        return players
+
     def is_milestone_game(self, game_num: int) -> bool:
         if game_num % 50 == 0 and game_num <= 250:
             return True

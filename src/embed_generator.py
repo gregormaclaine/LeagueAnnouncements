@@ -140,3 +140,31 @@ def leaderboard_string(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[O
 
     text += '```'
     return text
+
+
+def total_games_string(mode: Literal['Solo/Duo', 'Flex'], ranked_players: List[OrderedUserRank], tracked_players: List[TrackPlayer]) -> str:
+    if len(ranked_players) == 0:
+        return 'No Players to Rank.'
+
+    lines = []
+    for i, p in enumerate(ranked_players):
+        matches = [tp for tp in tracked_players if tp["puuid"] == p["puuid"]]
+        if len(matches) == 0:
+            log(
+                f"Couldn't find event-memorised player in tracked_players (puuid={p['puuid']})", 'ERROR', 'main.embeds')
+            continue
+        tp = matches[0]
+
+        part1 = f'{i + 1}. {tp['name']}#{tp['tag']}'
+        part2 = f"{p['rank'].games()} Games"
+
+        lines.append((part1, part2))
+
+    text = f'Most Games - {mode}:\n```md\n'
+    if len(lines):
+        max_len = max(len(l[0]) for l in lines)
+        for i, (part1, part2) in enumerate(lines):
+            text += f'    {r_pad(part1, max_len + 2)}{part2}\n'
+
+    text += '```'
+    return text
