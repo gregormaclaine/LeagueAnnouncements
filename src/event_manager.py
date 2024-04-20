@@ -232,7 +232,10 @@ class EventManager():
             response.log_error(
                 3, 'Couldn\'t get profile from puuid', 'main.events')
             return False
-        user: UserInfo = response.data
+
+        # Copy the user object so that it can be modified without
+        # changing the copy in the api cache
+        user = response.data.copy()
 
         # This is not accurate, but it accomplishes the thing I need to test for right now
         user.ranks['Solo/Duo'].wins -= offset

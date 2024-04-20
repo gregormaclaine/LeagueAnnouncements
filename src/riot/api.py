@@ -72,7 +72,7 @@ class RiotAPI:
     async def get_raw_match_info_by_id(self, match_id: str) -> APIResponse[APIMatch]:
         return await self.api(f"/lol/match/v5/matches/{match_id}", universal=True)
 
-    # @cache_with_timeout()
+    @cache_with_timeout()
     async def get_ranked_info(self, user_id: str) -> APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]]:
         data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-summoner/{user_id}")
         if data.error():

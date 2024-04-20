@@ -482,6 +482,7 @@ def main():
     #     await interaction.response.defer()
     #     await bot.tree.sync(guild=discord.Object(interaction.guild_id))
     #     await interaction.followup.send('Commands Synced')
+
     def update_remembered_levels():
         for puuid, memory in events.player_memory.items():
             for tracked in tracked_players.values():
