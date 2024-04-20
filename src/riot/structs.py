@@ -1,5 +1,5 @@
 from datetime import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import List, Literal, Optional, Self, cast
 from riot.responses import APILeagueEntry
 from utils import r_pad
@@ -177,3 +177,12 @@ class UserInfo:
         if self.ranks['Flex'].id() > self.ranks['Solo/Duo'].id():
             return self.ranks['Flex'].division
         return self.ranks['Solo/Duo'].division
+
+    def copy(self):
+        '''Returns a deep copy of the user object'''
+        champs = [replace(c) for c in self.top_champs]
+        ranks = {
+            mode: replace(rank)
+            for mode, rank in self.ranks.items()
+        }
+        return replace(self, ranks=ranks, top_champs=champs)
