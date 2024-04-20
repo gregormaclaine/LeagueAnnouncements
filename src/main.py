@@ -227,31 +227,7 @@ def main():
         await interaction.response.defer()
 
         announcments = await events.check([p['puuid'] for p in tracked], g_id)
-
-        if len(announcments) == 0:
-            await interaction.followup.send('No new announcements')
-            return
-
-        image_events = [e for e in announcments if e.type == 'image']
-        if len(image_events) > 0:
-            if channel_id := output_channels.get(g_id):
-                get_mentions_from_events(image_events, g_id)
-                files = [discord.File(e.image()) for e in image_events]
-                channel = cast(discord.TextChannel,
-                               bot.get_channel(channel_id))
-                await channel.send(files=files)
-
-        embed_events = [e for e in announcments if e.type == 'embed']
-        if len(embed_events) > 0:
-            embeds = [e.embed() for e in embed_events]
-            mentions = get_mentions_from_events(embed_events[:10], g_id)
-
-            if len(embeds) > 10:
-                mentions += f' (And {num_of('other announcement',
-                                            len(embeds) - 10)}...)'
-            await interaction.followup.send(mentions, embeds=embeds[:10])
-        else:
-            await interaction.followup.send('No embed announcements...')
+        await broadcast_events(announcments, g_id, interaction.channel_id, interaction)
 
     @bot.tree.command(name="rollback_memory", description="Resets tracking to before a certain number of games for a user")
     async def rollback_memory(interaction: discord.Interaction, username: Optional[str] = None, games: int = 1):
@@ -470,8 +446,8 @@ def main():
             await interaction.response.send_message('You do not have the permissions to use this command')
             return
 
-        export = storage.export_memory()
-        await interaction.response.send_message(export)
+        file = storage.memory_file_name()
+        await interaction.response.send_message(file=discord.File(file))
 
     # @bot.tree.command(name="sync", description="Refresh bot commands")
     # async def sync(interaction: discord.Interaction):
@@ -491,6 +467,42 @@ def main():
                         player['level'] = memory['level']
         storage.write(tracked_players, output_channels)
 
+    async def broadcast_events(events: List[BaseGameEvent], guild_id: int, channel_id: int, interaction: discord.Interaction):
+        if len(events) == 0:
+            if interaction is not None:
+                await interaction.followup.send('No new announcements')
+            return
+
+        image_events = [e for e in events if e.type == 'image']
+        if len(image_events) > 0:
+            get_mentions_from_events(image_events, guild_id)
+            files = [discord.File(e.image()) for e in image_events]
+            channel = cast(discord.TextChannel,
+                           bot.get_channel(channel_id))
+            await channel.send(files=files)
+
+        embed_events = [e for e in events if e.type == 'embed']
+        if len(embed_events) == 0 and interaction is not None:
+            await interaction.followup.send('No embed announcements...')
+            return
+
+        if interaction is not None:
+            embeds = [e.embed() for e in embed_events[:10]]
+            mentions = get_mentions_from_events(embed_events[:10], guild_id)
+
+            if len(embeds) > 10:
+                mentions += f' (And {num_of('other announcement',
+                                            len(embeds) - 10)}...)'
+            await interaction.followup.send(mentions, embeds=embeds[:10])
+
+        else:
+            embeds = [e.embed() for e in embed_events]
+            channel = cast(discord.TextChannel, bot.get_channel(channel_id))
+            for i in range(0, ceil(len(embeds) / 10), 10):
+                mentions = get_mentions_from_events(
+                    embed_events[i:i + 10], guild_id)
+                await channel.send(mentions, embeds=embeds[i:i + 10])
+
     @tasks.loop(seconds=300)  # Repeat every 5 mins
     async def automatic_announcement_check():
         for guild_id, channel_id in output_channels.items():
@@ -504,16 +516,7 @@ def main():
                 log(traceback.format_exc(), 'ERROR')
                 continue
 
-            if len(announcments) == 0:
-                continue
-
-            embeds = [e.embed() for e in announcments if e.type == 'embed']
-            channel = cast(discord.TextChannel, bot.get_channel(channel_id))
-            for i in range(0, ceil(len(embeds) / 10), 10):
-                mentions = get_mentions_from_events(
-                    announcments[i:i + 10], guild_id)
-                await channel.send(mentions, embeds=embeds[i:i + 10])
-
+            await broadcast_events(announcments, guild_id, channel_id, None)
             update_remembered_levels()
 
     bot.run(CONFIG.DISCORD_TOKEN)

@@ -88,9 +88,8 @@ def extract_from_data(memory: Any) -> tuple[dict[int, List[TrackPlayer]], dict[i
     return (tracked_players, output_channels, allotted_files)
 
 
-def export_memory() -> str:
-    with open(memory_path, 'r') as f:
-        return f.read()
+def memory_file_name() -> str:
+    return memory_path
 
 
 def write(tracked_players: dict[int, List[TrackPlayer]], output_channels: dict[int, int]):

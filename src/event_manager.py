@@ -221,7 +221,6 @@ class EventManager():
         return ranked_players
 
     def is_milestone_game(self, game_num: int) -> bool:
-        return True
         if game_num % 50 == 0 and game_num <= 250:
             return True
         return game_num % 100 == 0
