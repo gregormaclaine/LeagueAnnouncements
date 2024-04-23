@@ -1,6 +1,8 @@
 import aiohttp
-from typing import List, Literal, cast
-from asyncio import Semaphore
+from random import random
+from typing import List, Literal, cast, Optional
+from asyncio import Semaphore, sleep
+from datetime import datetime
 from utils import cache_with_timeout
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName
@@ -34,13 +36,43 @@ class RiotAPI:
         self.base_url = f"https://{server}.api.riotgames.com"
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
+        # Rate-limiting prevention
         self.sem = Semaphore(api_threads)
+        self.timeout_start = None
+        self.current_calls = 0
+
+        self.max_calls = 100
+        self.time_window = 120
+
+        self.in_batch_call = False
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
+        while self.timeout_start and self.current_calls >= self.max_calls:
+            wait = 1 + self.time_window - \
+                (datetime.now() - self.timeout_start).seconds
+
+            if wait > 0:
+                print(
+                    f'About to hit rate-limiting - waiting {wait} seconds until continuing')
+                await sleep(wait + random() * 2)
+
+        self.current_calls += 1
+
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
+
         async with aiohttp.ClientSession() as session:
             async with self.sem, session.get(base_url + url, params=params) as response:
+                # Track rate-limiting
+                rate_limiting = response.headers['X-App-Rate-Limit-Count']
+                current = int(
+                    rate_limiting.split(',')[1].split(':')[0])
+
+                if current == 1 or self.timeout_start is None:
+                    self.timeout_start = datetime.now()
+                elif current > self.current_calls:
+                    self.current_calls = current
+
                 if response.status == 200:
                     return APIResponse(data=await response.json())
                 else:
@@ -63,9 +95,11 @@ class RiotAPI:
         return await self.api(f"/lol/summoner/v4/summoners/by-puuid/{puuid}")
 
     @cache_with_timeout()
-    async def get_matches_ids_by_puuid(self, puuid: str, count: int = 20, start: int = 0) -> APIResponse[List[str]]:
+    async def get_matches_ids_by_puuid(self, puuid: str, count: int = 20, start: int = 0, type: Optional[Literal['ranked', 'normal', 'tourney', 'tutorial']] = None) -> APIResponse[List[str]]:
         url = f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
         params = {"count": count, "start": start}
+        if type:
+            params['type'] = type
         return await self.api(url, params, universal=True)
 
     @cache_with_timeout(300)
