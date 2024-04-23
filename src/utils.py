@@ -40,8 +40,13 @@ def icon_url(icon_id: int):
     return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 
+cache_info = {}
+
+
 def cache_with_timeout(seconds: int = 120):
     def decorator[T](func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
+        cache_info[func.__name__] = {
+            'timeout': seconds, 'hits': 0, 'misses': 0}
         cache: dict[tuple, tuple[datetime, T]] = {}
 
         async def wrapper(*args, **kwargs):
@@ -49,11 +54,13 @@ def cache_with_timeout(seconds: int = 120):
             if cached:
                 # print(f'Cache ✅ - {func.__name__}{args[1:]}')
                 if (datetime.now() - cached[0]).seconds <= seconds:
+                    cache_info[func.__name__]['hits'] += 1
                     return cached[1]
                 # print(f'Cache 🕒 - {func.__name__}{args[1:]}')
                 del cache[args]
 
             # print(f'Cache ⏩ - {func.__name__}{args[1:]}')
+            cache_info[func.__name__]['misses'] += 1
             data = await func(*args, **kwargs)
             cache[args] = (datetime.now(), data)
             return data
