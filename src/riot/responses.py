@@ -279,6 +279,8 @@ class APIMatchTeam(TypedDict):
 
 
 class APIMatchInfo(TypedDict):
+    # Can't seem to find other options of endOfGameResult
+    endOfGameResult: Literal['GameComplete']
     gameCreation: int
     gameDuration: int
     gameEndTimestamp: int
