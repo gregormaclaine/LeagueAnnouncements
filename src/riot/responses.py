@@ -29,15 +29,21 @@ class APIResponse[T]:
         504: 'Riot API experience internal issues (504)',
     }
 
-    def __init__(self, status: int = 200, data: T = None):
+    def __init__(self, status: int = 200, data: T = None, rate_limit_info=tuple[str, str]):
         self.status = status
         self.data = data
+        self.rate_limit_info = rate_limit_info
 
     def error(self) -> Optional[APIError]:
         return self.ERROR_TYPES.get(self.status, 'unknown')
 
     def is_server_err(self) -> bool:
         return self.status != 200 and self.status >= 500
+
+    def rate_limit_count(self) -> int:
+        if info := self.rate_limit_info[0]:
+            return int(info.split(',')[1].split(':')[0])
+        return -1
 
     async def respond_if_error(self, send_message) -> bool:
         '''Respond to discord command if error occured. Returns whether an error occured'''

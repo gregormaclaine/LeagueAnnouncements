@@ -1,5 +1,4 @@
 import aiohttp
-from random import random
 from typing import List, Literal, cast, Optional
 from asyncio import Semaphore, sleep
 from datetime import datetime
@@ -70,7 +69,7 @@ class RiotAPI:
                     status=response.status,
                     data=(await response.json()) if response.content_type == 'application/json' else None,
                     rate_limit_info=(
-                        response.headers['X-App-Rate-Limit-Count'], response.headers['X-App-Rate-Limit'])
+                        response.headers.get('X-App-Rate-Limit-Count'), response.headers.get('X-App-Rate-Limit'))
                 )
 
                 current = resobj.rate_limit_count()

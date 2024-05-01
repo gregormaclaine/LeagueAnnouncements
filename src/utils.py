@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-from typing import ParamSpec, Awaitable, Callable, Coroutine, List
+from typing import ParamSpec, Awaitable, Callable, List, Any, TypedDict
 from config import LEAGUE_PATCH
 
 Params = ParamSpec('Params')
@@ -40,27 +40,41 @@ def icon_url(icon_id: int):
     return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 
-cache_info = {}
+class CacheInfo(TypedDict):
+    timeout: int
+    hits: int
+    misses: int
+    last_cleared: datetime
+
+
+cache_info: dict[str, CacheInfo] = {}
+
+
+def clear_old_cached(cache: dict[tuple, tuple[datetime, Any]], max_time: int):
+    for k, info in cache.items():
+        if (datetime.now() - info[0]).seconds > max_time:
+            del cache[k]
 
 
 def cache_with_timeout(seconds: int = 120):
     def decorator[T](func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
-        cache_info[func.__name__] = {
-            'timeout': seconds, 'hits': 0, 'misses': 0}
+        info = {'timeout': seconds, 'hits': 0,
+                'misses': 0, 'last_cleared': datetime.now()}
+        cache_info[func.__name__] = info
         cache: dict[tuple, tuple[datetime, T]] = {}
 
         async def wrapper(*args, **kwargs):
-            cached = cache.get(args)
-            if cached:
-                # print(f'Cache ✅ - {func.__name__}{args[1:]}')
+            if (datetime.now() - info['last_cleared']).seconds > 60*60:
+                clear_old_cached(cache, seconds)
+                info['last_cleared'] = datetime.now()
+
+            if cached := cache.get(args):
                 if (datetime.now() - cached[0]).seconds <= seconds:
-                    cache_info[func.__name__]['hits'] += 1
+                    info['hits'] += 1
                     return cached[1]
-                # print(f'Cache 🕒 - {func.__name__}{args[1:]}')
                 del cache[args]
 
-            # print(f'Cache ⏩ - {func.__name__}{args[1:]}')
-            cache_info[func.__name__]['misses'] += 1
+            info['misses'] += 1
             data = await func(*args, **kwargs)
             cache[args] = (datetime.now(), data)
             return data
