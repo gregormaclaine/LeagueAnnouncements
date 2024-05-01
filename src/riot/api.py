@@ -39,47 +39,62 @@ class RiotAPI:
         # Rate-limiting prevention
         self.sem = Semaphore(api_threads)
         self.timeout_start = None
-        self.current_calls = 0
+        self.active_calls = 0
+        self.completed_calls = 0
+        self.waiting_calls = 0
 
         self.max_calls = 100
-        self.time_window = 120
+        self.time_window = 121
 
-        self.in_batch_call = False
+    def time_till_rate_limit_resets(self):
+        return self.time_window - (datetime.now() - self.timeout_start).seconds
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
-        while self.timeout_start and self.current_calls >= self.max_calls:
-            wait = 1 + self.time_window - \
-                (datetime.now() - self.timeout_start).seconds
-
+        while self.timeout_start and self.active_calls + self.completed_calls >= self.max_calls:
+            wait = self.time_till_rate_limit_resets()
             if wait > 0:
-                print(
-                    f'About to hit rate-limiting - waiting {wait} seconds until continuing')
-                await sleep(wait + random() * 2)
+                self.waiting_calls += 1
+                await sleep(wait)
+                self.waiting_calls -= 1
+            else:
+                self.completed_calls = 0
 
-        self.current_calls += 1
+        self.active_calls += 1
 
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
 
         async with aiohttp.ClientSession() as session:
             async with self.sem, session.get(base_url + url, params=params) as response:
-                # Track rate-limiting
-                rate_limiting = response.headers['X-App-Rate-Limit-Count']
-                current = int(
-                    rate_limiting.split(',')[1].split(':')[0])
+                resobj = APIResponse(
+                    status=response.status,
+                    data=(await response.json()) if response.content_type == 'application/json' else None,
+                    rate_limit_info=(
+                        response.headers['X-App-Rate-Limit-Count'], response.headers['X-App-Rate-Limit'])
+                )
 
+                current = resobj.rate_limit_count()
+                self.active_calls -= 1
+                self.completed_calls += 1
+
+                # Save the time if this is the first call in the 2 minute window
                 if current == 1 or self.timeout_start is None:
                     self.timeout_start = datetime.now()
-                elif current > self.current_calls:
-                    self.current_calls = current
 
-                if response.status == 200:
-                    return APIResponse(data=await response.json())
-                else:
-                    r = APIResponse(status=response.status)
-                    if r.error() == 'unknown':
-                        raise Exception(str(response))
-                    return r
+                # Accounts for when the rate limit didn't start from 0 (When restarting bot)
+                elif current > self.completed_calls + self.active_calls:
+                    self.completed_calls = current
+
+                # Only prints once when the final call of the window completes
+                elif current == self.max_calls:
+                    secs = self.time_till_rate_limit_resets()
+                    print(
+                        f'Hit rate-limit ceiling: {self.waiting_calls} calls waiting {secs} seconds before restarting...')
+
+                if resobj.error() == 'unknown':
+                    raise Exception(str(response))
+
+                return resobj
 
     @cache_with_timeout(600)
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:
