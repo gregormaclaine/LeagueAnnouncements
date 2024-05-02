@@ -18,7 +18,7 @@ class RankChangeEvent(BaseGameEvent):
 
         embed.add_field(
             name=f"{self.user.summoner_name} has been {
-                self.rank_dir()} from {self.old_rank.full()} to {self.new_rank.full()}!",
+                self.rank_dir()} from {self.old_rank.full()} to {self.new_rank.full()}",
             value=f"Make sure to congratulate them for this {
                 random_superlative()} achievement!",
             inline=False)
