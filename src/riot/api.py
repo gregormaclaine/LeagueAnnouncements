@@ -85,7 +85,7 @@ class RiotAPI:
                     self.timeout_start = datetime.now()
 
                 # Accounts for when the rate limit didn't start from 0 (When restarting bot)
-                elif current > self.completed_calls + self.active_calls:
+                elif current and current > self.completed_calls + self.active_calls:
                     self.completed_calls = current
 
                 # Only prints once when the final call of the window completes

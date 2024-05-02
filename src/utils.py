@@ -40,6 +40,10 @@ def icon_url(icon_id: int):
     return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 
+def filter_strs_nums(arr: List) -> List[str | int | float]:
+    return [a for a in arr if isinstance(a, str) or isinstance(a, int) or isinstance(a, float)]
+
+
 class CacheInfo(TypedDict):
     timeout: int
     hits: int
@@ -69,15 +73,16 @@ def cache_with_timeout(seconds: int = 120):
                 clear_old_cached(cache, seconds)
                 info['last_cleared'] = datetime.now()
 
-            if cached := cache.get(args):
+            args_to_cache = tuple(filter_strs_nums(args))
+            if cached := cache.get(args_to_cache):
                 if (datetime.now() - cached[0]).seconds <= seconds:
                     info['hits'] += 1
                     return cached[1]
-                del cache[args]
+                del cache[args_to_cache]
 
             info['misses'] += 1
             data = await func(*args, **kwargs)
-            cache[args] = (datetime.now(), data)
+            cache[args_to_cache] = (datetime.now(), data)
             return data
 
         return wrapper
