@@ -53,16 +53,21 @@ class RiotAPI:
         return datetime.now() + timedelta(seconds=secs)
 
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
-        while self.timeout_start and self.active_calls + self.completed_calls >= self.max_calls:
-            wait = self.time_till_rate_limit_resets()
-            if wait > 0:
-                self.waiting_calls += 1
-                await sleep(wait)
-                self.waiting_calls -= 1
-            else:
+        while True:
+            # Check if it's time to reset the time window
+            if self.timeout_start is None or datetime.now() > self.timeout_start + timedelta(seconds=self.time_window):
+                self.timeout_start = datetime.now()
+                self.active_calls = 0
                 self.completed_calls = 0
 
-        self.active_calls += 1
+            # Check if we can make a new call within the time window
+            if self.completed_calls + self.active_calls < self.max_calls:
+                self.active_calls += 1
+                break
+            else:
+                self.waiting_calls += 1
+                await sleep((self.timeout_start + timedelta(seconds=self.time_window) - datetime.now()).total_seconds())
+                self.waiting_calls -= 1
 
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
@@ -80,12 +85,8 @@ class RiotAPI:
                 self.active_calls -= 1
                 self.completed_calls += 1
 
-                # Save the time if this is the first call in the 2 minute window
-                if current == 1 or self.timeout_start is None:
-                    self.timeout_start = datetime.now()
-
                 # Accounts for when the rate limit didn't start from 0 (When restarting bot)
-                elif current and current > self.completed_calls + self.active_calls:
+                if current and current > self.completed_calls + self.active_calls:
                     self.completed_calls = current
 
                 # Only prints once when the final call of the window completes
