@@ -209,8 +209,7 @@ def main():
     @bot.tree.command(name="profile", description="Shows profile of a player")
     async def profile(interaction: discord.Interaction, name: str, tag: str):
         log_command(interaction)
-        user = await get_user_from_name(interaction, name, tag)
-        if user:
+        if user := await get_user_from_name(interaction, name, tag):
             await interaction.response.send_message(embed=embed_generator.big_user(user))
 
     @bot.tree.command(name="run_checks", description="Manually check for new announcements")
@@ -475,6 +474,9 @@ def main():
                 for player in tracked:
                     if player['puuid'] == puuid:
                         player['level'] = memory['level']
+                        player['name'] = memory['name']
+                        player['tag'] = memory['tag']
+                        break
         storage.write(tracked_players, output_channels)
 
     async def broadcast_events(events: List[BaseGameEvent], guild_id: int, channel_id: int, interaction: discord.Interaction):

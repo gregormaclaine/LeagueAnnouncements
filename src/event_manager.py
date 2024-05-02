@@ -13,6 +13,8 @@ class Memory(TypedDict):
     lose_streak: int
     ranks: RanksDict
     level: int
+    name: str
+    tag: str
 
 
 class OrderedUserRank(TypedDict):
@@ -209,7 +211,9 @@ class EventManager():
                 'Solo/Duo': dataclasses.replace(user.ranks['Solo/Duo']),
                 'Flex': dataclasses.replace(user.ranks['Flex'])
             },
-            'level': user.level
+            'level': user.level,
+            'name': user.summoner_name,
+            'tag': user.summoner_tag
         }
 
     def get_ordered_rankings(self, mode: Literal['Solo/Duo', 'Flex']) -> List[OrderedUserRank]:
