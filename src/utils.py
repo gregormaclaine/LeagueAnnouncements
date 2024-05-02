@@ -51,9 +51,10 @@ cache_info: dict[str, CacheInfo] = {}
 
 
 def clear_old_cached(cache: dict[tuple, tuple[datetime, Any]], max_time: int):
-    for k, info in cache.items():
-        if (datetime.now() - info[0]).seconds > max_time:
-            del cache[k]
+    old_keys = [k for k, info in cache.items()
+                if (datetime.now() - info[0]).seconds > max_time]
+    for k in old_keys:
+        del cache[k]
 
 
 def cache_with_timeout(seconds: int = 120):
