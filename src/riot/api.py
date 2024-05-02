@@ -1,7 +1,7 @@
 import aiohttp
 from typing import List, Literal, cast, Optional
 from asyncio import Semaphore, sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils import cache_with_timeout
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName
@@ -48,6 +48,10 @@ class RiotAPI:
     def time_till_rate_limit_resets(self):
         return self.time_window - (datetime.now() - self.timeout_start).seconds
 
+    def time_when_rate_limit_resets(self):
+        secs = self.time_till_rate_limit_resets()
+        return datetime.now() + timedelta(seconds=secs)
+
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
         while self.timeout_start and self.active_calls + self.completed_calls >= self.max_calls:
             wait = self.time_till_rate_limit_resets()
@@ -86,9 +90,9 @@ class RiotAPI:
 
                 # Only prints once when the final call of the window completes
                 elif current == self.max_calls:
-                    secs = self.time_till_rate_limit_resets()
+                    when = self.time_when_rate_limit_resets().strftime('%H:%M:%S')
                     print(
-                        f'Hit rate-limit ceiling: {self.waiting_calls} calls waiting {secs} seconds before restarting...')
+                        f'Hit rate-limit ceiling: {self.waiting_calls} calls will restart at {when}...')
 
                 if resobj.error() == 'unknown':
                     raise Exception(str(response))
