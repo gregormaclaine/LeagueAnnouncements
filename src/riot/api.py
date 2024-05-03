@@ -72,33 +72,42 @@ class RiotAPI:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
 
-        async with aiohttp.ClientSession() as session:
-            async with self.sem, session.get(base_url + url, params=params) as response:
-                resobj = APIResponse(
-                    status=response.status,
-                    data=(await response.json()) if response.content_type == 'application/json' else None,
-                    rate_limit_info=(
-                        response.headers.get('X-App-Rate-Limit-Count'), response.headers.get('X-App-Rate-Limit'))
-                )
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with self.sem, session.get(base_url + url, params=params) as response:
+                    resobj = APIResponse(
+                        status=response.status,
+                        data=(await response.json()) if response.content_type == 'application/json' else None,
+                        rate_limit_info=(
+                            response.headers.get('X-App-Rate-Limit-Count'), response.headers.get('X-App-Rate-Limit'))
+                    )
 
-                current = resobj.rate_limit_count()
-                self.active_calls -= 1
-                self.completed_calls += 1
+                    current = resobj.rate_limit_count()
+                    self.active_calls -= 1
+                    self.completed_calls += 1
 
-                # Accounts for when the rate limit didn't start from 0 (When restarting bot)
-                if current and current > self.completed_calls + self.active_calls:
-                    self.completed_calls = current
+                    # Accounts for when the rate limit didn't start from 0 (When restarting bot)
+                    if current and current > self.completed_calls + self.active_calls:
+                        self.completed_calls = current
 
-                # Only prints once when the final call of the window completes
-                elif current == self.max_calls:
-                    when = self.time_when_rate_limit_resets().strftime('%H:%M:%S')
-                    print(
-                        f'Hit rate-limit ceiling: {self.waiting_calls} calls will restart at {when}...')
+                    # Only prints once when the final call of the window completes
+                    elif current == self.max_calls:
+                        when = self.time_when_rate_limit_resets().strftime('%H:%M:%S')
+                        print(
+                            f'Hit rate-limit ceiling: {self.waiting_calls} calls will restart at {when}...')
 
-                if resobj.error() == 'unknown':
-                    raise Exception(str(response))
+                    if resobj.error() == 'unknown':
+                        raise Exception(str(response))
+                    elif resobj.error() == 'rate-limit':
+                        print(
+                            'ERROR: Surpassed rate limit - retrying after 5 seconds')
+                        await sleep(5)
+                        return await self.api(url, params, universal)
 
-                return resobj
+                    return resobj
+
+        except aiohttp.ClientConnectionError:
+            return APIResponse(499)
 
     @cache_with_timeout(600)
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:

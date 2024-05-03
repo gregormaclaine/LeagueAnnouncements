@@ -13,6 +13,7 @@ class APIResponse[T]:
         403: 'invalid-api-key',
         404: 'not-found',
         429: 'rate-limit',
+        499: 'client-connection-error',
 
         # Server Errors
         500: 'server-internal',
@@ -24,6 +25,7 @@ class APIResponse[T]:
         403: 'Riot API key is invalid',
         404: 'Couldn\'t find item',
         429: 'Riot API was rate-limited',
+        499: 'Couldn\'t connect to server',
         500: 'Riot API experience internal issues (500)',
         502: 'Riot API experience internal issues (502)',
         504: 'Riot API experience internal issues (504)',
@@ -41,6 +43,8 @@ class APIResponse[T]:
         return self.status != 200 and self.status >= 500
 
     def rate_limit_count(self) -> int:
+        if self.rate_limit_info is None:
+            return -1
         if info := self.rate_limit_info[0]:
             return int(info.split(',')[1].split(':')[0])
         return -1
