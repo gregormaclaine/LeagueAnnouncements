@@ -42,11 +42,11 @@ class APIResponse[T]:
     def is_server_err(self) -> bool:
         return self.status != 200 and self.status >= 500
 
-    def rate_limit_count(self) -> int:
+    def rate_limit_count(self, which: int = 1) -> int:
         if self.rate_limit_info is None:
             return -1
         if info := self.rate_limit_info[0]:
-            return int(info.split(',')[1].split(':')[0])
+            return int(info.split(',')[which].split(':')[0])
         return -1
 
     async def respond_if_error(self, send_message) -> bool:

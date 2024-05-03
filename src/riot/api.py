@@ -1,10 +1,10 @@
 import aiohttp
 from typing import List, Literal, cast, Optional
-from asyncio import Semaphore, sleep
-from datetime import datetime, timedelta
+from asyncio import Semaphore
 from utils import cache_with_timeout
-from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp, TierOption
+from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName
+from .rate_limiting import handle_rate_limit
 
 
 class RiotAPI:
@@ -37,38 +37,9 @@ class RiotAPI:
 
         # Rate-limiting prevention
         self.sem = Semaphore(api_threads)
-        self.timeout_start = None
-        self.active_calls = 0
-        self.completed_calls = 0
-        self.waiting_calls = 0
 
-        self.max_calls = 100
-        self.time_window = 121
-
-    def time_till_rate_limit_resets(self):
-        return self.time_window - (datetime.now() - self.timeout_start).seconds
-
-    def time_when_rate_limit_resets(self):
-        secs = self.time_till_rate_limit_resets()
-        return datetime.now() + timedelta(seconds=secs)
-
+    @handle_rate_limit(max_calls=100, time_window=121, header_order=1)
     async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
-        while True:
-            # Check if it's time to reset the time window
-            if self.timeout_start is None or datetime.now() > self.timeout_start + timedelta(seconds=self.time_window):
-                self.timeout_start = datetime.now()
-                self.active_calls = 0
-                self.completed_calls = 0
-
-            # Check if we can make a new call within the time window
-            if self.completed_calls + self.active_calls < self.max_calls:
-                self.active_calls += 1
-                break
-            else:
-                self.waiting_calls += 1
-                await sleep((self.timeout_start + timedelta(seconds=self.time_window) - datetime.now()).total_seconds())
-                self.waiting_calls -= 1
-
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
 
@@ -81,31 +52,9 @@ class RiotAPI:
                         rate_limit_info=(
                             response.headers.get('X-App-Rate-Limit-Count'), response.headers.get('X-App-Rate-Limit'))
                     )
-
-                    current = resobj.rate_limit_count()
-                    self.active_calls -= 1
-                    self.completed_calls += 1
-
-                    # Accounts for when the rate limit didn't start from 0 (When restarting bot)
-                    if current and current > self.completed_calls + self.active_calls:
-                        self.completed_calls = current
-
-                    # Only prints once when the final call of the window completes
-                    elif current == self.max_calls:
-                        when = self.time_when_rate_limit_resets().strftime('%H:%M:%S')
-                        print(
-                            f'Hit rate-limit ceiling: {self.waiting_calls} calls will restart at {when}...')
-
                     if resobj.error() == 'unknown':
                         raise Exception(str(response))
-                    elif resobj.error() == 'rate-limit':
-                        print(
-                            'ERROR: Surpassed rate limit - retrying after 5 seconds')
-                        await sleep(5)
-                        return await self.api(url, params, universal)
-
                     return resobj
-
         except aiohttp.ClientConnectionError:
             return APIResponse(499)
 
