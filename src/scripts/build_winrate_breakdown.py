@@ -1,12 +1,9 @@
 import csv
-import time
 import asyncio
 import config
 from utils import cache_info
 from riot import RiotAPI, RiotComputer
 from embed_generator import champion_name
-
-start_time = time.time()
 
 CONFIG = config.get_config()
 api = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER,
@@ -48,5 +45,3 @@ for func, info in cache_info.items():
         continue
     print(f": {func}{' ' * (max_len - len(func))}-",
           f"{info['hits']} Hits,\t{info['misses']} Misses")
-
-print(f'\nComputations completed in {time.time() - start_time:.2f} seconds.')
