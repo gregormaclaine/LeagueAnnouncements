@@ -55,7 +55,7 @@ def handle_rate_limit(max_calls: int, time_window: int, header_order: int, verbo
                 return await wrapper(*args, **kwargs)
 
             if verbose:
-                print(f"Rate-limit update: <{current}T,",
+                print(f"Rate-limit({header_order}) update: <{current}T,",
                       f"{info['active_calls']}A, {info['completed_calls']}C>")
             return resobj
 
