@@ -28,7 +28,7 @@ class RiotComputer:
     def __init__(self, api: RiotAPI) -> None:
         self.api = api
 
-    async def calculate_champ_breakdown(self, puuids: List[str], min_games=10):
+    async def calculate_champ_breakdown(self, puuids: List[str], min_games=10) -> List[UserChampionInfo]:
         tasks = [self.calculate_champ_breakdown_for_puuid(puuid, min_games)
                  for puuid in puuids]
         champs = flat(await gather(*tasks))
