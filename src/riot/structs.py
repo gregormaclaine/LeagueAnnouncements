@@ -56,6 +56,10 @@ class GameInfo:
         p = [p for p in self.participants if p.id == id]
         return p[0] if len(p) else None
 
+    @classmethod
+    def empty(cls):
+        return cls('-1', 0, 0, 'Remake', [], 'Other')
+
     def __str__(self) -> str:
         output = datetime.fromtimestamp(self.start_time / 1000)\
             .strftime("%a, %d %b %Y %I:%M%p")
