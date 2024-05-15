@@ -1,12 +1,14 @@
-from typing import Literal, override
+from typing import Literal, override, Optional
 from riot import GameInfo, UserInfo, Rank
 from utils import random_superlative, rank_assets
 from .base import BaseGameEvent
 
 
 class RankChangeEvent(BaseGameEvent):
-    def __init__(self, user: UserInfo, game: GameInfo, old_rank: Rank, mode: Literal['Flex', 'Solo/Duo']):
-        super().__init__(user, game)
+    game: Optional[GameInfo]
+
+    def __init__(self, user: UserInfo, game: Optional[GameInfo], old_rank: Rank, mode: Literal['Flex', 'Solo/Duo']):
+        super().__init__(user, game if game else GameInfo.empty())
         self.old_rank = old_rank
         self.new_rank = user.ranks[mode]
         self.mode = mode
