@@ -49,8 +49,9 @@ class RiotAPI:
                     resobj = APIResponse(
                         status=response.status,
                         data=(await response.json()) if response.content_type == 'application/json' else None,
-                        rate_limit_info=(
-                            response.headers.get('X-App-Rate-Limit-Count'), response.headers.get('X-App-Rate-Limit'))
+                        rate_limit_count=response.headers.get(
+                            'X-App-Rate-Limit-Count'),
+                        rate_limit=response.headers.get('X-App-Rate-Limit')
                     )
                     if resobj.error() == 'unknown':
                         raise Exception(str(response))
@@ -74,7 +75,7 @@ class RiotAPI:
     @cache_with_timeout()
     async def get_matches_ids_by_puuid(self, puuid: str, count: int = 20, start: int = 0, type: Optional[Literal['ranked', 'normal', 'tourney', 'tutorial']] = None) -> APIResponse[List[str]]:
         url = f"/lol/match/v5/matches/by-puuid/{puuid}/ids"
-        params = {"count": count, "start": start}
+        params: dict[str, str | int] = {"count": count, "start": start}
         if type:
             params['type'] = type
         return await self.api(url, params, universal=True)

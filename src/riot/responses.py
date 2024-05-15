@@ -2,7 +2,7 @@ from typing import Literal, Optional, TypedDict, Final, List
 from logs import log
 
 type APIError = Literal['unknown', 'rate-limit', 'invalid-api-key', 'unknown',
-                        'not-found', 'server-internal', 'bad-gateway', 'gateway-timeout']
+                        'not-found', 'server-internal', 'bad-gateway', 'gateway-timeout', 'client-connection-error']
 
 
 class APIResponse[T]:
@@ -31,10 +31,15 @@ class APIResponse[T]:
         504: 'Riot API experience internal issues (504)',
     }
 
-    def __init__(self, status: int = 200, data: T = None, rate_limit_info=tuple[str, str]):
+    status: int
+    rate_limit_info: Optional[tuple[str, str]]
+
+    def __init__(self, status: int = 200, data: T = None, rate_limit_count: Optional[str] = None, rate_limit: Optional[str] = None):
         self.status = status
         self.data = data
-        self.rate_limit_info = rate_limit_info
+
+        if rate_limit and rate_limit_count:
+            self.rate_limit_info = (rate_limit_count, rate_limit)
 
     def error(self) -> Optional[APIError]:
         return self.ERROR_TYPES.get(self.status, 'unknown')
