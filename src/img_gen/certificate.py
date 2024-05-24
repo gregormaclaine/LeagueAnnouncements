@@ -113,7 +113,8 @@ class Certificate:
         res = requests.get(url)
         if not res.ok:
             print(res)
-            raise Exception(res.text)
+            # raise Exception(res.text)
+            return Image.open('assets/unknown.png')
 
         return Image.open(io.BytesIO(res.content))
 
