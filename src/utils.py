@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-from typing import ParamSpec, Awaitable, Callable, List, Any, TypedDict
+from typing import ParamSpec, Awaitable, Callable, List, Any, TypedDict, Iterable
 from config import LEAGUE_PATCH
 
 Params = ParamSpec('Params')
@@ -40,7 +40,7 @@ def icon_url(icon_id: int):
     return f"https://ddragon.leagueoflegends.com/cdn/{LEAGUE_PATCH}/img/profileicon/{icon_id}.png"
 
 
-def filter_strs_nums(arr: List) -> List[str | int | float]:
+def filter_strs_nums(arr: Iterable) -> List[str | int | float]:
     return [a for a in arr if isinstance(a, str) or isinstance(a, int) or isinstance(a, float)]
 
 
@@ -63,8 +63,8 @@ def clear_old_cached(cache: dict[tuple, tuple[datetime, Any]], max_time: int):
 
 def cache_with_timeout(seconds: int = 120):
     def decorator[T](func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
-        info = {'timeout': seconds, 'hits': 0,
-                'misses': 0, 'last_cleared': datetime.now()}
+        info: CacheInfo = {'timeout': seconds, 'hits': 0,
+                           'misses': 0, 'last_cleared': datetime.now()}
         cache_info[func.__name__] = info
         cache: dict[tuple, tuple[datetime, T]] = {}
 
