@@ -32,7 +32,7 @@ class APIResponse[T]:
     }
 
     status: int
-    rate_limit_info: Optional[tuple[str, str]]
+    rate_limit_info: Optional[tuple[str, str]] = None
 
     def __init__(self, status: int = 200, data: T = None, rate_limit_count: Optional[str] = None, rate_limit: Optional[str] = None):
         self.status = status
@@ -40,6 +40,8 @@ class APIResponse[T]:
 
         if rate_limit and rate_limit_count:
             self.rate_limit_info = (rate_limit_count, rate_limit)
+        else:
+            self.rate_limit_info = None
 
     def error(self) -> Optional[APIError]:
         return self.ERROR_TYPES.get(self.status, 'unknown')
