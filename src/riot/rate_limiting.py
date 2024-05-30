@@ -1,7 +1,10 @@
-from typing import Callable, Awaitable
+from typing import Callable, Awaitable, TypeVar
 from datetime import timedelta, datetime
 from asyncio import sleep
 from .responses import APIResponse
+
+
+T = TypeVar('T')
 
 
 def handle_rate_limit(max_calls: int, time_window: int, header_order: int, verbose: bool = False):
@@ -9,7 +12,7 @@ def handle_rate_limit(max_calls: int, time_window: int, header_order: int, verbo
     Uses a make-shift token bucket algorithm to prevent function from running more than a certain
     number of times in a given window of time.
     '''
-    def decorator(func: Callable[..., Awaitable[APIResponse]]) -> Callable[..., Awaitable[APIResponse]]:
+    def decorator(func: Callable[..., Awaitable[APIResponse[T]]]) -> Callable[..., Awaitable[APIResponse[T]]]:
         info = {'timeout_start': None,
                 'active_calls': 0,
                 'completed_calls': 0,
