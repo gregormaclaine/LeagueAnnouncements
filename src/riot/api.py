@@ -113,8 +113,10 @@ class RiotAPI:
             return data
 
         return APIResponse(200, [
-            UserChamp(c["championId"], c["championLevel"], points=c["championPoints"],
-                      last_play=c["lastPlayTime"],    chest=c["chestGranted"])
+            UserChamp(c["championId"],
+                      c["championLevel"],
+                      points=c["championPoints"],
+                      last_play=c["lastPlayTime"])
             for c in data.data
         ])
 

@@ -91,7 +91,6 @@ class UserChamp:
     level: int
     points: int
     last_play: int
-    chest: bool
 
 
 RANK_DIVISIONS: List[RankOption] = ['UNRANKED', 'IRON', 'BRONZE', 'SILVER',
