@@ -318,3 +318,30 @@ class APIMatchInfo(TypedDict):
 class APIMatch(TypedDict):
     metadata: APIMatchMetadata
     info: APIMatchInfo
+
+
+class APIChampionMasteryMilestoneReward(TypedDict):
+    rewardValue: str
+    rewardType: str
+    maximumReward: int
+
+
+class APIChampionMasteryMilestone(TypedDict):
+    requireGradeCounts: dict[str, int]
+    rewardMarks: int
+    bonus: bool
+    rewardConfig: APIChampionMasteryMilestoneReward
+
+
+class APIChampionMastery(TypedDict):
+    puuid: str
+    championId: int
+    championLevel: int
+    championPoints: int
+    lastPlayTime: int
+    championPointsSinceLastLevel: int
+    championPointsUntilNextLevel: int
+    markRequiredForNextLevel: int
+    tokensEarned: int
+    championSeasonMilestone: int
+    nextSeasonMilestone: APIChampionMasteryMilestone

@@ -3,7 +3,7 @@ from typing import List, Literal, cast, Optional
 from asyncio import Semaphore
 from utils import cache_with_timeout
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp
-from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName
+from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName, APIChampionMastery
 from .rate_limiting import handle_rate_limit
 
 
@@ -108,15 +108,15 @@ class RiotAPI:
 
     @cache_with_timeout()
     async def get_mastery_info(self, puuid: str) -> APIResponse[List[UserChamp]]:
-        data = await self.api(f"/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}")
+        data: APIResponse[List[APIChampionMastery]] = await self.api(f"/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}")
         if data.error():
-            return data
+            return cast(APIResponse[List[UserChamp]], data)
 
         return APIResponse(200, [
-            UserChamp(c["championId"],
-                      c["championLevel"],
-                      points=c["championPoints"],
-                      last_play=c["lastPlayTime"])
+            UserChamp(c['championId'],
+                      c['championLevel'],
+                      points=c['championPoints'],
+                      last_play=c['lastPlayTime'])
             for c in data.data
         ])
 
