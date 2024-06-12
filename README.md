@@ -7,6 +7,8 @@ A Discord bot that allows you to track your own League of Legends accounts and a
   - A new announcement will be made per game
 - Being demoted **or premoted** between ranks in ranked play (Solo or Flex)
 - Overtaking another tracked player on a ranked leaderboard
+- A special announcement is made when completing a milestone number of games
+  - A certificate image is generated and sent along with any other event embeds
 
 ## Usage
 
@@ -28,11 +30,10 @@ If you want to be pinged when it makes an announcement related to you, use the `
 /unclaim_profile {index} - Unlinks discord account from tracked player
 /who_claims {index} - Get list of users who have claimed an account
 
-/leaderboard {mode} {view} - Shows all ranked users in order based on either Solo or Flex rank. (View determines the style of the leaderboard)
-
 /set_channel {channel} {silent=false} - Set channel to which the announcements will be sent
 /run_checks - Manually check for new announcements (This is done automatically every 5 minutes)
 
+/leaderboard {mode} {view} {board} - Shows a leaderboard of the ranked users (See Leaderboard section for more info)
 ```
 
 ### Dev Commands
@@ -46,7 +47,18 @@ If you want to be pinged when it makes an announcement related to you, use the `
 /autochecker pause - Pauses the automatic checker
 /autochecker unpause - Unpauses the automatic checker
 /autochecker start - Restarts the checker if it has shutdown due to an error
+
+/export_memory - Returns the JSON file that represents all persistently stored data
 ```
+
+### Leaderboard Command
+
+| Board | Description                                                                     | Notes                            |
+| :---: | ------------------------------------------------------------------------------- | -------------------------------- |
+| Rank  | Shows the standard ranked leaderboard based on ranked matches during this split |                                  |
+| Games | Orders the server based on how many ranked games they have played this split    | Only shows `Text` view currently |
+
+_Note:_ All boards work for both Solo/Duo and Flex rank modes.
 
 ## Running The Bot
 
