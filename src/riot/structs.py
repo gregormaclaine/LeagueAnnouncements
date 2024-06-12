@@ -1,7 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass, field, replace
 from typing import List, Literal, Optional, Self, cast
-from riot.responses import APILeagueEntry
+from .responses import APILeagueEntry
 from utils import r_pad
 
 
