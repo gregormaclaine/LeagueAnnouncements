@@ -103,10 +103,11 @@ class EventManager():
     def find_events_from_games(self, user: UserInfo, games: List[GameInfo], memory: Memory):
         events = []
         for game in reversed(games):
-            participant = self.match_participant(user.id, game)
+            participant = self.match_participant(user.puuid, game)
             if participant is None:
-                log(f"Couldn't find participant matching user id [{user.id}] for [{
-                    user.summoner_name}] in game [{game.id}]", 'ERROR', 'main.events')
+                sum_name = user.summoner_name + '#' + user.summoner_tag
+                log(
+                    f"Couldn't find participant matching user puuid [{user.puuid}] for [{sum_name}] in game [{game.id}]", 'ERROR', 'main.events')
                 continue
 
             if participant.kda() != 'Perfect' and float(participant.kda()) < self.BAD_KDA:
@@ -173,14 +174,14 @@ class EventManager():
         self.leaderboard_memory[guild_id][mode] = [r['puuid'] for r in ranks]
         return events
 
-    def match_participant(self, user_id: str, game: GameInfo):
-        p = [p for p in game.participants if p.id == user_id]
+    def match_participant(self, puuid: str, game: GameInfo):
+        p = [p for p in game.participants if p.puuid == puuid]
         return p[0] if p else None
 
-    def did_user_win(self, user_id: str, game: GameInfo) -> bool:
+    def did_user_win(self, puuid: str, game: GameInfo) -> bool:
         if game is None:
             return True
-        p = [p for p in game.participants if p.id == user_id]
+        p = [p for p in game.participants if p.puuid == puuid]
         return (p[0].team == game.winner) if p else True
 
     async def remember_history(self, user: UserInfo, history: List[str]) -> None:
@@ -199,7 +200,7 @@ class EventManager():
 
             if game.winner == 'Remake':
                 continue
-            if self.did_user_win(user.id, game):
+            if self.did_user_win(user.puuid, game):
                 break
             lose_streak += 1
 

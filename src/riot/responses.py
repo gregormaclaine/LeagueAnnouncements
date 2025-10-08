@@ -92,10 +92,10 @@ class APISummonerName(TypedDict):
 
 
 class APISummoner(TypedDict):
-    accountId: str
+    # accountId: str
     profileIconId: int
     revisionDate: int
-    id: str
+    # id: str
     puuid: str
     summonerLevel: int
 
@@ -115,8 +115,9 @@ class APIMiniSeries(TypedDict):
 
 class APILeagueEntry(TypedDict):
     leagueId: str
-    summonerId: str
-    summonerName: str
+    # summonerId: str
+    # summonerName: str
+    puuid: str
     queueType: str
     tier: str
     rank: str

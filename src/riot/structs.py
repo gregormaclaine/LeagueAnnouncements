@@ -19,7 +19,7 @@ type RanksDict = dict[Literal['Solo/Duo', 'Flex'], Rank]
 
 @dataclass
 class PlayerInfo:
-    id: str
+    puuid: str
     summoner_name: str
     kills: int
     deaths: int
@@ -52,8 +52,8 @@ class GameInfo:
     participants: List[PlayerInfo]
     queue_type: QueueType
 
-    def get_player(self, id: str):
-        p = [p for p in self.participants if p.id == id]
+    def get_player(self, puuid: str):
+        p = [p for p in self.participants if p.puuid == puuid]
         return p[0] if len(p) else None
 
     @classmethod
@@ -164,7 +164,7 @@ class Rank:
 
 @dataclass
 class UserInfo:
-    id: str = ''
+    # id: str = ''
     puuid: str = ''
     summoner_name: str = 'Unknown User'
     summoner_tag: str = ''

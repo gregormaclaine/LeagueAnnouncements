@@ -85,8 +85,8 @@ class RiotAPI:
         return await self.api(f"/lol/match/v5/matches/{match_id}", universal=True)
 
     @cache_with_timeout()
-    async def get_ranked_info(self, user_id: str) -> APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]]:
-        data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-summoner/{user_id}")
+    async def get_ranked_info(self, puuid: str) -> APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]]:
+        data: APIResponse[List[APILeagueEntry]] = await self.api(f"/lol/league/v4/entries/by-puuid/{puuid}")
         if data.error():
             return cast(APIResponse[dict[Literal['Solo/Duo', 'Flex'], Rank]], data)
 
@@ -140,7 +140,7 @@ class RiotAPI:
                 winner = "Red"
 
             player_info = PlayerInfo(
-                id=participant["summonerId"],
+                puuid=participant["puuid"],
                 summoner_name=participant["summonerName"],
                 kills=participant["kills"],
                 deaths=participant["deaths"],
@@ -183,7 +183,6 @@ class RiotAPI:
 
         try:
             user = UserInfo(
-                id=summoner.data["id"],
                 puuid=puuid,
                 summoner_name=summoner_name.data['gameName'],
                 summoner_tag=summoner_name.data['tagLine'],
@@ -191,14 +190,15 @@ class RiotAPI:
                 icon=summoner.data["profileIconId"]
             )
         except KeyError:
+            print(summoner_name.data)
             summoner.log_error(
                 14, 'Couldn\'t read summoner data: ' + str(summoner.data))
             return cast(APIResponse[UserInfo], summoner)
 
-        ranks = await self.get_ranked_info(user.id)
+        ranks = await self.get_ranked_info(puuid)
         if ranks.error():
             ranks.log_error(
-                12, f'Couldn\'t get summoner ranked info from user id [{user.id}]')
+                12, f'Couldn\'t get summoner ranked info from user [{user.summoner_name}#{user.summoner_tag}]')
             return cast(APIResponse[UserInfo], ranks)
         user.ranks = ranks.data
 

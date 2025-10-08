@@ -226,7 +226,8 @@ def main():
         await interaction.response.defer()
 
         announcments = await events.check([p['puuid'] for p in tracked], g_id)
-        await broadcast_events(announcments, g_id, interaction.channel_id, interaction)
+        if (interaction.channel_id is not None):
+            await broadcast_events(announcments, g_id, interaction.channel_id, interaction)
 
     @bot.tree.command(name="rollback_memory", description="Resets tracking to before a certain number of games for a user")
     async def rollback_memory(interaction: discord.Interaction, username: Optional[str] = None, games: int = 1):
@@ -479,7 +480,7 @@ def main():
                         break
         storage.write(tracked_players, output_channels)
 
-    async def broadcast_events(events: List[BaseGameEvent], guild_id: int, channel_id: int, interaction: discord.Interaction):
+    async def broadcast_events(events: List[BaseGameEvent], guild_id: int, channel_id: int, interaction: discord.Interaction | None):
         if len(events) == 0:
             if interaction is not None:
                 await interaction.followup.send('No new announcements')

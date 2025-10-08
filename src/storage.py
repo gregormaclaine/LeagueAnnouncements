@@ -92,7 +92,7 @@ def memory_file_name() -> str:
     return memory_path
 
 
-def write(tracked_players: dict[int, List[TrackPlayer]], output_channels: dict[int, int]):
+def write(tracked_players: dict[int, List[TrackPlayer]] | None, output_channels: dict[int, int] | None):
     if tracked_players is None:
         tracked_players = write_memory['tracked_players']
         output_channels = write_memory['output_channels']
