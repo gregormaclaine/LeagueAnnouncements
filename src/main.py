@@ -420,7 +420,7 @@ def main():
         await interaction.response.send_message(msg)
 
     @bot.tree.command(name="leaderboard", description="Get the ranked leaderboard of all tracked users")
-    async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo', view: Literal['Embed', 'Text'] = 'Embed', board: Literal['Rank', 'Games'] = 'Rank'):
+    async def leaderboard(interaction: discord.Interaction, mode: Literal['Solo/Duo', 'Flex'] = 'Solo/Duo', view: Literal['Embed', 'Text'] = 'Text', board: Literal['Rank', 'Games'] = 'Rank'):
         log_command(interaction)
 
         g_id = interaction.guild_id

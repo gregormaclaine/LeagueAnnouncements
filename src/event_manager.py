@@ -54,7 +54,7 @@ class EventManager():
         response = await self.riot.get_profile_info(puuid)
         if response.error():
             response.log_error(
-                2, 'Couldn\'t get profile from puuid', 'main.events')
+                2, 'Couldn\'t get profile from puuid: ' + str(response.data), 'main.events')
             return []
         user: UserInfo = response.data
 
