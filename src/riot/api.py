@@ -173,7 +173,7 @@ class RiotAPI:
         summoner_name = await self.get_summoner_name_from_puuid(puuid)
         if summoner_name.error() is not None:
             summoner_name.log_error(
-                15, 'Couldn\'t get summoner name info from puuid: ' + str(summoner_name.data))
+                15, f'Couldn\'t get summoner name info from puuid [{puuid}]: ' + str(summoner_name.data))
             return cast(APIResponse[UserInfo], summoner_name)
 
         summoner = await self.get_summoner_by_puuid(puuid)
