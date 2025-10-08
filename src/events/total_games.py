@@ -8,6 +8,8 @@ from storage import allot_file
 
 
 class TotalGamesEvent(BaseGameEvent):
+    mode: Literal['Solo/Duo', 'Flex']
+
     def __init__(self, user: UserInfo, game: GameInfo, mode: Literal['Solo/Duo', 'Flex']):
         super().__init__(user, game)
         self.mode = mode

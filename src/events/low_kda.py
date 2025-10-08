@@ -9,7 +9,7 @@ class LowKDAEvent(BaseGameEvent):
         embed = super().embed(0xEE4B2B)
         embed.set_thumbnail(url=rank_assets[self.user.max_division.upper()])
 
-        player = self.game.get_player(self.user.id)
+        player = self.game.get_player(self.user.puuid)
         if player is None:
             return embed
 
