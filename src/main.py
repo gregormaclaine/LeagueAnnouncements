@@ -86,7 +86,7 @@ def main():
         )
 
         for tracked in tracked_players.values():
-            await events.check([p['puuid'] for p in tracked], quiet=True)
+            await events.check([p['puuid'] for p in tracked if not p.get('deleted', False)], quiet=True)
 
         log('Starting automatic announcement checker')
         if not automatic_announcement_check.is_running():
@@ -250,7 +250,7 @@ def main():
 
         await interaction.response.defer()
 
-        announcments = await events.check([p['puuid'] for p in tracked], g_id)
+        announcments = await events.check([p['puuid'] for p in tracked if not p.get('deleted', False)], g_id)
         if (interaction.channel_id is not None):
             await broadcast_events(announcments, g_id, interaction.channel_id, interaction)
 
@@ -274,7 +274,7 @@ def main():
         await interaction.response.defer()
 
         puuids = [(f"{u['name']}#{u['tag']}", u['puuid'])
-                  for u in tracked if username is None or u['name'].lower() == username.lower()]
+                  for u in tracked if not u.get('deleted', False) and (username is None or u['name'].lower() == username.lower())]
 
         result = f'Result (Matched {num_of("User", len(puuids))}){
             ":" if puuids else ""}'
