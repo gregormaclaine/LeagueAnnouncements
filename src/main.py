@@ -25,8 +25,7 @@ def main():
 
     bot = discord_commands.Bot(
         command_prefix="!", intents=discord.Intents.default())
-    riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER,
-                          CONFIG.REGION, CONFIG.API_THREADS)
+    riot_client = RiotAPI(CONFIG.RIOT_TOKEN, CONFIG.SERVER, CONFIG.REGION)
     events = EventManager(riot_client)
 
     def get_mentions_from_events(events: List[BaseGameEvent], guild_id: int) -> str:

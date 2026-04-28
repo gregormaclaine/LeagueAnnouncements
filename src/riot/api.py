@@ -1,7 +1,6 @@
 import aiohttp
 import time
 from typing import List, Literal, cast, Optional
-from asyncio import Semaphore
 from utils import cache_with_timeout
 from logs import log
 from config import IS_DEV
@@ -47,15 +46,13 @@ class RiotAPI:
         "CHALLENGER": 9,
     }
 
-    def __init__(self, api_key: str, server: str, region: str, api_threads: int):
+    def __init__(self, api_key: str, server: str, region: str):
         self.api_key = api_key
         self.base_url = f"https://{server}.api.riotgames.com"
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
-        # Rate-limiting prevention
-        self.sem = Semaphore(api_threads)
-
-    @handle_rate_limit(max_calls=100, time_window=121, header_order=1, verbose=IS_DEV)
+    @handle_rate_limit(max_calls=100, time_window=121, header_order=1)
+    @handle_rate_limit(max_calls=20, time_window=1, header_order=0)
     async def api(self, url: str, params: dict = {}, universal=False, has_silent_404s: bool = False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
@@ -64,7 +61,7 @@ class RiotAPI:
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with self.sem, session.get(base_url + url, params=params) as response:
+                async with session.get(base_url + url, params=params) as response:
                     resobj = APIResponse(
                         status=response.status,
                         data=(await response.json()) if response.content_type == 'application/json' else None,

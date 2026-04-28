@@ -275,7 +275,7 @@ async def _testing():
     from dotenv import load_dotenv
     load_dotenv()
 
-    riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe', 2)
+    riot_client = RiotAPI(os.getenv('RIOT_TOKEN', ''), 'euw1', 'europe')
     events = EventManager(riot_client)
 
     user = await riot_client.get_riot_account_puuid('im not from here', '9969')

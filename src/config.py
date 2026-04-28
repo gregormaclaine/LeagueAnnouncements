@@ -16,7 +16,6 @@ class Config():
     REGION: str
     FILES_PATH: str
     OWNER_DISCORD_ID: Optional[int]
-    API_THREADS: int
 
 
 def invalid_env(msg: str):
@@ -60,14 +59,6 @@ def get_config():
             invalid_env('OWNER_DISCORD_ID must be a number')
             exit(1)
 
-    API_THREADS = os.getenv('API_THREADS', '5')
-    if API_THREADS is not None:
-        try:
-            API_THREADS = int(API_THREADS)
-        except ValueError:
-            invalid_env('API_THREADS must be a number')
-            exit(1)
-
     global_stored_config = Config(
         RIOT_TOKEN,
         DISCORD_TOKEN,
@@ -75,6 +66,5 @@ def get_config():
         os.getenv("REGION", "europe"),
         FILES_PATH,
         OWNER_DISCORD_ID,
-        API_THREADS
     )
     return global_stored_config
