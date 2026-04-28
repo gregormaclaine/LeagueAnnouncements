@@ -1,4 +1,6 @@
 from math import ceil
+import asyncio
+import time
 import traceback
 import discord
 from discord.ext import commands as discord_commands, tasks
@@ -51,8 +53,32 @@ def main():
 
         return data_res.data
 
+    start_time = time.monotonic()
+    waiting_task: asyncio.Task | None = None
+
+    @bot.event
+    async def on_connect():
+        nonlocal waiting_task
+
+        async def log_waiting():
+            delay = 5.0
+            while True:
+                await asyncio.sleep(delay)
+                elapsed = time.monotonic() - start_time
+                log(f'Still waiting for bot to be ready... ({elapsed:.1f}s elapsed)')
+                delay = min(delay * 2, 60.0)
+
+        waiting_task = asyncio.create_task(log_waiting())
+
     @bot.event
     async def on_ready():
+        nonlocal waiting_task
+        if waiting_task:
+            waiting_task.cancel()
+            waiting_task = None
+        elapsed = time.monotonic() - start_time
+        log(f'Bot ready in {elapsed:.2f}s')
+
         await bot.tree.sync()
         log(f"Logged in as {bot.user} (ID: {bot.user.id if bot.user else ''})")
         await bot.change_presence(
