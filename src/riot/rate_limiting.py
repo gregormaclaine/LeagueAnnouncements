@@ -6,7 +6,7 @@ from .responses import APIResponse
 T = TypeVar('T')
 
 
-def handle_rate_limit(max_calls: int, time_window: int, header_order: int, verbose: bool = False):
+def handle_rate_limit(max_calls: int, time_window: float, header_order: int, verbose: bool = False):
     '''
     Uses a make-shift token bucket algorithm to prevent function from running more than a certain
     number of times in a given window of time.
