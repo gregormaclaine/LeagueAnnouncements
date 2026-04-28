@@ -72,11 +72,12 @@ def tracked_list(users: List[TrackPlayer], offset: int):
         color=random.randint(0, 16777215),
     )
 
-    for i, u in enumerate(users[offset * 15:(offset + 1) * 15]):
+    sorted_users = sorted(users, key=lambda u: u.get('deleted', False))
+    for i, u in enumerate(sorted_users[offset * 15:(offset + 1) * 15]):
         index = offset * 15 + i + 1
         links = '🔗' * len(u['claimed_users'])
-        user_line = f"{index}. {u['name']}#{
-            u['tag']} (Lvl {u['level']})  {links}"
+        deleted = '👻' if u.get('deleted', False) else ''
+        user_line = f"{index}. {u['name']}#{u['tag']} (Lvl {u['level']})  {links}{deleted}"
         embed.add_field(name=user_line, value="", inline=False)
 
     return embed
