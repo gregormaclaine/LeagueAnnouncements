@@ -52,7 +52,8 @@ class RiotAPI:
         self.base_url_universal = f"https://{region}.api.riotgames.com"
 
     @handle_rate_limit(max_calls=100, time_window=121, header_order=1)
-    @handle_rate_limit(max_calls=20, time_window=1, header_order=0)
+    # \/ The actual limit is 20/s, but we want to stay a bit under it to avoid triggering the 5s backoff
+    @handle_rate_limit(max_calls=16, time_window=1, header_order=0)
     async def api(self, url: str, params: dict = {}, universal=False, has_silent_404s: bool = False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
