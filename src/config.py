@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 LEAGUE_PATCH = "14.10.1"
+IS_DEV = not bool(os.getenv('RAILWAY_PROJECT_ID'))
 
 
 @dataclass

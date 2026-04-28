@@ -1,7 +1,7 @@
 import json
 import traceback
 from os import path, remove
-from typing import Any, List, TypedDict
+from typing import Any, List, NotRequired, TypedDict
 from logs import log
 from config import get_config
 from datetime import datetime, timedelta
@@ -28,6 +28,7 @@ class TrackPlayer(TypedDict):
     tag: str
     level: int
     claimed_users: set[int]
+    deleted: NotRequired[bool]
 
 
 class AllottedFile(TypedDict):
@@ -81,6 +82,7 @@ def extract_from_data(memory: Any) -> tuple[dict[int, List[TrackPlayer]], dict[i
     for tracked in tracked_players.values():
         for user in tracked:
             user['claimed_users'] = set(user['claimed_users'])
+            user.setdefault('deleted', False)
 
     for file in allotted_files:
         file['expiry'] = datetime.fromisoformat(file['expiry'])

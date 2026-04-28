@@ -1,10 +1,27 @@
 import aiohttp
+import time
 from typing import List, Literal, cast, Optional
 from asyncio import Semaphore
 from utils import cache_with_timeout
+from logs import log
+from config import IS_DEV
 from .structs import GameInfo, PlayerInfo, Rank, RankOption, QueueType, RanksDict, UserInfo, UserChamp
 from .responses import APIResponse, APILeagueEntry, APIRiotAccount, APISummoner, APIMatch, APISummonerName, APIChampionMastery
 from .rate_limiting import handle_rate_limit
+
+
+def _fmt_endpoint(url: str) -> str:
+    parts = url.split('/')
+    return '/'.join(p[:6] + '...' if len(p) > 30 else p for p in parts)
+
+
+def _fmt_rate_limit(info: Optional[tuple[str, str]]) -> str:
+    if info is None:
+        return ''
+    counts = [p.split(':')[0] for p in info[0].split(',')]
+    limits = [p.split(':')[0] for p in info[1].split(',')]
+    pairs = sorted(zip(counts, limits), key=lambda p: int(p[1]))
+    return '  [' + ' | '.join(f'{c}/{l}' for c, l in pairs) + ']'
 
 
 class RiotAPI:
@@ -38,10 +55,12 @@ class RiotAPI:
         # Rate-limiting prevention
         self.sem = Semaphore(api_threads)
 
-    @handle_rate_limit(max_calls=100, time_window=121, header_order=1)
-    async def api(self, url: str, params: dict = {}, universal=False) -> APIResponse:
+    @handle_rate_limit(max_calls=100, time_window=121, header_order=1, verbose=IS_DEV)
+    async def api(self, url: str, params: dict = {}, universal=False, has_silent_404s: bool = False) -> APIResponse:
         base_url = self.base_url_universal if universal else self.base_url
         params["api_key"] = self.api_key
+
+        start = time.perf_counter()
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -53,20 +72,34 @@ class RiotAPI:
                             'X-App-Rate-Limit-Count'),
                         rate_limit=response.headers.get('X-App-Rate-Limit')
                     )
-                    if resobj.error() == 'unknown':
-                        raise Exception(str(response))
-                    return resobj
+                    response_repr = str(response)
         except aiohttp.ClientConnectionError:
             return APIResponse(499)
+
+        if has_silent_404s and resobj.status == 400:
+            # Some endpoints (e.g. /lol/summoner/v4/summoners/by-puuid) return 400 instead of 404 when the item isn't found, so we have to account for that
+            resobj.status = 404
+
+        if resobj.error() == 'unknown':
+            raise Exception(response_repr)
+
+        if True:  # Can be toggled for more concise logging when not debugging
+            elapsed_ms = (time.perf_counter() - start) * 1000
+            log(f'{_fmt_endpoint(url)}  {resobj.status}  ({elapsed_ms:.0f}ms){_fmt_rate_limit(resobj.rate_limit_info)}', 'API', 'riot.api')
+
+        return resobj
 
     @cache_with_timeout(600)
     async def get_riot_account_puuid(self, name: str, tag: str) -> APIResponse[APIRiotAccount]:
         url = f"/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
-        return await self.api(url, universal=True)
+        return await self.api(url, universal=True, has_silent_404s=True)
 
     @cache_with_timeout(12 * 60 * 60)
     async def get_summoner_name_from_puuid(self, puuid: str) -> APIResponse[APISummonerName]:
-        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid, universal=True)
+        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid, universal=True, has_silent_404s=True)
+
+    async def _get_summoner_name_raw(self, puuid: str) -> APIResponse[APISummonerName]:
+        return await self.api('/riot/account/v1/accounts/by-puuid/' + puuid, universal=True, has_silent_404s=True)
 
     @cache_with_timeout(270)
     async def get_summoner_by_puuid(self, puuid: str) -> APIResponse[APISummoner]:
@@ -171,6 +204,13 @@ class RiotAPI:
 
     async def get_profile_info(self, puuid: str) -> APIResponse[UserInfo]:
         summoner_name = await self.get_summoner_name_from_puuid(puuid)
+
+        if summoner_name.error() == 'not-found':
+            for _ in range(2):
+                summoner_name = await self._get_summoner_name_raw(puuid)
+                if summoner_name.error() != 'not-found':
+                    break
+
         if summoner_name.error() is not None:
             summoner_name.log_error(
                 15, f'Couldn\'t get summoner name info from puuid [{puuid}]: ' + str(summoner_name.data))

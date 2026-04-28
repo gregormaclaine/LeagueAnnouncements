@@ -523,7 +523,10 @@ def main():
                 continue
 
             try:
-                announcments = await events.check([p['puuid'] for p in tracked_players[guild_id]], guild_id)
+                announcments = await events.check(
+                    [p['puuid'] for p in tracked_players[guild_id] if not p.get('deleted', False)],
+                    guild_id
+                )
             except Exception:
                 log(f'Couldn\'t check announcements for [{guild_id}]', 'ERROR')
                 log(traceback.format_exc(), 'ERROR')
@@ -531,6 +534,13 @@ def main():
 
             await broadcast_events(announcments, guild_id, channel_id, None)
             update_remembered_levels()
+
+            if events.deleted_users:
+                for player in tracked_players[guild_id]:
+                    if player['puuid'] in events.deleted_users:
+                        player['deleted'] = True
+                        log(f'Marked [{player["name"]}#{player["tag"]}] as deleted', source='main')
+                storage.write(tracked_players, output_channels)
 
     bot.run(CONFIG.DISCORD_TOKEN)
 

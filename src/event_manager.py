@@ -29,13 +29,16 @@ class EventManager():
     riot: RiotAPI
     player_memory: dict[str, Memory]
     leaderboard_memory: dict[int, dict[Literal['Solo/Duo', 'Flex'], List[str]]]
+    deleted_users: set[str]
 
     def __init__(self, riot: RiotAPI) -> None:
         self.riot = riot
         self.player_memory = {}
         self.leaderboard_memory = {}
+        self.deleted_users = set()
 
     async def check(self, puuids: List[str], guild_id: Optional[int] = None, quiet=False):
+        self.deleted_users = set()
         if not quiet:
             log('Running event checks...', source='main.events')
         tasks = [self.check_user(puuid) for puuid in puuids]
@@ -52,7 +55,12 @@ class EventManager():
 
     async def check_user(self, puuid: str) -> List[BaseGameEvent]:
         response = await self.riot.get_profile_info(puuid)
-        if response.error():
+        if response.error() is not None:
+            if response.error() == 'not-found':
+                self.deleted_users.add(puuid)
+                memory = self.player_memory.get(puuid)
+                label = f"{memory['name']}#{memory['tag']}" if memory else puuid
+                log(f'User [{label}] not found after retries - will be marked as deleted', 'WARNING', 'main.events')
             response.log_error(
                 2, 'Couldn\'t get profile from puuid: ' + str(response.data), 'main.events')
             return []
