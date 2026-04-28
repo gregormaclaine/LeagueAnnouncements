@@ -170,45 +170,35 @@ class TestRateLimiterWindowBoundary(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(call_times), max_calls * 2)
 
-    async def test_window_reset_clears_in_flight_accounting(self):
+    async def test_sliding_window_limits_call_rate(self):
         """
-        Documents the fixed-window reset bug: when the window resets while calls
-        are in-flight, the active-calls counter is wiped, potentially allowing
-        more than max_calls requests into the underlying function simultaneously.
-
-        This test records the observed behaviour so a regression is caught if the
-        algorithm is improved.
+        With a sliding window, slots expire individually so the rate is correctly
+        bounded even when slow in-flight calls span multiple windows. The limiter
+        governs when calls START, not how many are concurrently open — so peak
+        concurrent connections may exceed max_calls, but the RATE must not.
         """
         max_calls = 3
         window = 0.15
-        concurrent_peaks: list[int] = []
-        in_flight = 0
+        start_times: list[float] = []
 
         @make_limiter(max_calls=max_calls, time_window=window)
         async def slow_api():
-            nonlocal in_flight
-            in_flight += 1
-            concurrent_peaks.append(in_flight)
-            # Hold the request open long enough for the window to expire mid-flight
-            await asyncio.sleep(window + 0.05)
-            in_flight -= 1
-            return FakeResponse(count=in_flight + 1)
+            start_times.append(time.monotonic())
+            await asyncio.sleep(window + 0.05)  # outlasts the window
+            return FakeResponse(count=len(start_times))
 
-        # Fire max_calls slow requests, then immediately fire more before they finish
-        batch1 = [slow_api() for _ in range(max_calls)]
-        await asyncio.sleep(0.01)              # let batch1 start but not finish
-        batch2 = [slow_api() for _ in range(max_calls)]
-        await asyncio.gather(*batch1, *batch2)
+        await asyncio.gather(*[slow_api() for _ in range(max_calls * 2)])
 
-        # With a correct algorithm the peak would be max_calls.
-        # With the fixed-window reset bug it can exceed max_calls.
-        observed_peak = max(concurrent_peaks)
-        self.assertGreaterEqual(
-            observed_peak, 1,
-            "Sanity: at least one call must have been in flight",
-        )
-        # Uncomment to assert correct behaviour once the bug is fixed:
-        # self.assertLessEqual(observed_peak, max_calls)
+        self.assertEqual(len(start_times), max_calls * 2)
+
+        # No sliding window of length `window` should contain more than max_calls starts
+        t0 = start_times[0]
+        for t in start_times:
+            starts_in_window = sum(1 for s in start_times if t <= s < t + window)
+            self.assertLessEqual(
+                starts_in_window, max_calls,
+                f"Too many calls started in window [{t - t0:.3f}s, {t - t0 + window:.3f}s)",
+            )
 
 
 class TestRateLimiter429Handling(unittest.IsolatedAsyncioTestCase):
