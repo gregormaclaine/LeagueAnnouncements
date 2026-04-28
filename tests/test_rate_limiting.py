@@ -7,7 +7,7 @@ from typing import Any
 from unittest.mock import patch, MagicMock
 
 # Ensure src/ is importable and stub external dependencies before any project import
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
 sys.modules.setdefault('logs', MagicMock())
 
 from riot.rate_limiting import handle_rate_limit  # noqa: E402

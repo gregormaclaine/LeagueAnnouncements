@@ -64,7 +64,8 @@ def main():
             while True:
                 await asyncio.sleep(delay)
                 elapsed = time.monotonic() - start_time
-                log(f'Still waiting for bot to be ready... ({elapsed:.1f}s elapsed)')
+                log(
+                    f'Still waiting for bot to be ready... ({elapsed:.1f}s elapsed)')
                 delay = min(delay * 2, 60.0)
 
         waiting_task = asyncio.create_task(log_waiting())
@@ -513,7 +514,6 @@ def main():
 
         image_events = [e for e in events if e.type == 'image']
         if len(image_events) > 0:
-            get_mentions_from_events(image_events, guild_id)
             files = [discord.File(e.image()) for e in image_events]
             channel = cast(discord.TextChannel,
                            bot.get_channel(channel_id))
@@ -549,7 +549,8 @@ def main():
 
             try:
                 announcments = await events.check(
-                    [p['puuid'] for p in tracked_players[guild_id] if not p.get('deleted', False)],
+                    [p['puuid'] for p in tracked_players[guild_id]
+                        if not p.get('deleted', False)],
                     guild_id
                 )
             except Exception:
